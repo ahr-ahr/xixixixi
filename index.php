@@ -18,14 +18,19 @@ class EdgeAutomation
     {
         $options = new ChromeOptions();
 
+        $extensionPath = "C:\\xampp\\htdocs\\xixixixi\\admkpobhocmdideidcndkfaeffadipkc";
+
         $options->addArguments([
-            '--user-data-dir=C:\Users\AHMAD HAIKAL RIZAL\AppData\Local\Microsoft\Edge\User Data',
-            '--profile-directory=Default',
+            '--user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"',
+            '--user-data-dir="C:\\Users\\AHMAD~1\\AppData\\Local\\Microsoft\\Edge\\User Data"',
+            //'--proxy-server=http://your-proxy-ip:port',
+            '--profile-directory="Profile 1"',
+            '--load-extension=' . $extensionPath,
             '--disable-popup-blocking',
-            '--disable-notifications',
-            '--load-extension=C:\xampp\htdocs\xixixixi\admkpobhocmdideidcndkfaeffadipkc'
+            '--disable-notifications'
         ]);
-        //$options->addExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
+        $options->addExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
+        $options->addEncodedExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
 
         $capabilities = DesiredCapabilities::microsoftEdge();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
@@ -44,8 +49,8 @@ class EdgeAutomation
         );
 
         // Isi "First Name" dan "Last Name"
-        $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys('China');
-        $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys('Sipit');
+        $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys('Rahman');
+        $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys('Frike');
 
         // Klik tombol "Next"
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
@@ -87,7 +92,7 @@ class EdgeAutomation
             );
 
             // Isi alamat Gmail yang diinginkan
-            $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys('chinasipit4289');
+            $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys('rahmanfrikey31231');
 
         } catch (NoSuchElementException $e) {
             // Jika opsi "Create your own Gmail address" tidak ditemukan, langsung isi username
@@ -113,8 +118,8 @@ class EdgeAutomation
         );
 
         // Isi Password dan Confirm Password
-        $this->driver->findElement(WebDriverBy::name('Passwd'))->sendKeys('chinasipit');
-        $this->driver->findElement(WebDriverBy::name('PasswdAgain'))->sendKeys('chinasipit');
+        $this->driver->findElement(WebDriverBy::name('Passwd'))->sendKeys('LuminousS?25');
+        $this->driver->findElement(WebDriverBy::name('PasswdAgain'))->sendKeys('LuminousS?25');
 
         // Tunggu tombol Next muncul setelah isi Password
         $this->driver->wait(10)->until(
@@ -124,18 +129,44 @@ class EdgeAutomation
         // Klik tombol "Next" setelah isi Password
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
+
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
+        );
+
+        $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
+        $phoneNumberInput->click();
+        $phoneNumberInput->sendKeys('6283192910802');
+
+        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+        // // Tunggu sampai input OTP muncul
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::name('code'))
+        );
+
+        // // Temukan input OTP
+        $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+
+        // // Masukkan kode OTP (gantilah '123456' dengan kode yang didapat)
+        $otpInput->sendKeys('123456');
+
+        // // Tekan tombol Next setelah memasukkan OTP
+        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+
         // Tunggu CAPTCHA muncul
-        sleep(5);
+        sleep(30);
 
-        // Coba selesaikan CAPTCHA dengan ekstensi Buster
-        if ($this->solveCaptchaWithBuster()) {
-            echo "CAPTCHA berhasil dipecahkan dengan Buster!\n";
-        } else {
-            echo "Gagal menyelesaikan CAPTCHA!\n";
-            return;
-        }
+        // // Coba selesaikan CAPTCHA dengan ekstensi Buster
+        // if ($this->solveCaptchaWithBuster()) {
+        //     echo "CAPTCHA berhasil dipecahkan dengan Buster!\n";
+        // } else {
+        //     echo "Gagal menyelesaikan CAPTCHA!\n";
+        //     return;
+        // }
 
-        echo "Form berhasil dikirim!\n";
+        // echo "Form berhasil dikirim!\n";
     }
 
 
