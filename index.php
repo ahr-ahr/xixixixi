@@ -9,13 +9,17 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverSelect;
 use Facebook\WebDriver\Exception\NoSuchElementException;
+use Faker\Factory as Faker;
 
 class EdgeAutomation
 {
     private $driver;
+    private $faker;
 
     public function __construct()
     {
+        $this->faker = Faker::create();
+
         $options = new ChromeOptions();
 
         $extensionPath = "C:\\xampp\\htdocs\\xixixixi\\admkpobhocmdideidcndkfaeffadipkc";
@@ -48,9 +52,11 @@ class EdgeAutomation
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('firstName'))
         );
 
-        // Isi "First Name" dan "Last Name"
-        $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys('Rahman');
-        $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys('Frike');
+        $firstName = $this->faker->firstName;
+        $lastName = $this->faker->lastName;
+
+        $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys($firstName);
+        $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys($lastName);
 
         // Klik tombol "Next"
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
