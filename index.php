@@ -19,20 +19,29 @@ class EdgeAutomation
     public function __construct()
     {
         $this->faker = Faker::create();
-
         $options = new ChromeOptions();
 
         $extensionPath = "C:\\xampp\\htdocs\\xixixixi\\admkpobhocmdideidcndkfaeffadipkc";
 
+        $randomUserAgent = $this->faker->userAgent;
+
+        $proxyApiUrl = "http://127.0.0.1:10101/api/proxy?t=2&num=1&country=ID";
+
         $options->addArguments([
-            '--user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"',
+            "--user-agent=$randomUserAgent",
             '--user-data-dir="C:\\Users\\AHMAD~1\\AppData\\Local\\Microsoft\\Edge\\User Data"',
-            //'--proxy-server=http://ip:port',
+            //"--proxy-server=$proxyApiUrl", // Langsung gunakan API proxy
             '--profile-directory="Profile 1"',
             '--load-extension=' . $extensionPath,
             '--disable-popup-blocking',
-            '--disable-notifications'
+            '--disable-notifications',
+            "--ignore-certificate-errors",
+            "--no-sandbox",
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--proxy-bypass-list=*"
         ]);
+
         $options->addExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
         $options->addEncodedExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
 
@@ -40,12 +49,34 @@ class EdgeAutomation
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
 
         $this->driver = RemoteWebDriver::create('http://localhost:9515', $capabilities);
+        echo "Current User-Agent: " . $randomUserAgent;
     }
 
     public function fillForm()
     {
-        $url = 'https://accounts.google.com/signup';
-        $this->driver->get($url);
+        $url1 = 'https://accounts.google.com/signup';
+        $url2 = 'https://api64.ipify.org?format=json';
+
+        // Buka window pertama
+        $this->driver->get($url1);
+
+        // Buka window baru
+        $this->driver->executeScript("window.open('', '_blank');");
+
+        // Pindah ke window kedua
+        $windows = $this->driver->getWindowHandles();
+        $this->driver->switchTo()->window($windows[1]);
+
+        // Buka URL kedua di window baru
+        $this->driver->get($url2);
+
+        // Ambil IP
+        $ip = $this->driver->findElement(WebDriverBy::tagName('body'))->getText();
+        echo "\nCurrent IP: " . $ip;
+
+        // Kembali ke window pertama
+        $this->driver->switchTo()->window($windows[0]);
+
 
         // Tunggu elemen input "First Name" muncul
         $this->driver->wait(10)->until(
@@ -73,7 +104,7 @@ class EdgeAutomation
         $year = $birthDate->format('Y');
 
         // Isi Tanggal Lahir (Hari)
-        $this->driver->findElement(WebDriverBy::name('day'))->sendKeys($day);
+        $this->driver->findElement(WebDriverBy::id('day'))->sendKeys($day);
 
         // Pilih Bulan dari Dropdown
         $monthDropdown = new WebDriverSelect($this->driver->findElement(WebDriverBy::id('month')));
@@ -161,29 +192,77 @@ class EdgeAutomation
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
 
+        // Tunggu sampai input nomor telepon muncul
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
         );
 
+        // Panggil API 5sim untuk membeli nomor
+        $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
+        $country = 'indonesia'; // Atau 'any'
+        $operator = 'virtual52'; // Bisa spesifik operator
+        $product = 'google';
+
+        $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
+        $headers = [
+            "Authorization: Bearer $token",
+            "Accept: application/json"
+        ];
+
+        // Request ke API 5sim untuk mendapatkan nomor
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($response, true);
+
+        if (isset($data['phone'])) {
+            $phoneNumber = $data['phone'];
+        } else {
+            die("Gagal mendapatkan nomor dari API 5sim");
+        }
+
+        // Masukkan nomor telepon ke input
         $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
         $phoneNumberInput->click();
-        $phoneNumberInput->sendKeys('6283192910802');
+        $phoneNumberInput->sendKeys($phoneNumber);
 
+        // Klik tombol "Next"
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        // // Tunggu sampai input OTP muncul
-        $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::name('code'))
+        // Tunggu hingga input OTP muncul
+        $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
         );
 
-        // // Temukan input OTP
+        // Cek OTP dari API 5sim
+        $orderId = $data['id']; // ID order dari 5sim
+        $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
+
+        do {
+            sleep(5); // Cek setiap 5 detik
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $otpResponse = curl_exec($ch);
+            curl_close($ch);
+
+            $otpData = json_decode($otpResponse, true);
+            $otp = $otpData['sms'][0]['code'] ?? null;
+        } while (!$otp);
+
+        // Masukkan OTP ke input
         $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+        $otpInput->sendKeys($otp);
 
-        // // Masukkan kode OTP (gantilah '123456' dengan kode yang didapat)
-        $otpInput->sendKeys('123456');
-
-        // // Tekan tombol Next setelah memasukkan OTP
+        // Klik tombol "Next"
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+        echo "Verifikasi berhasil!";
 
 
         // Tunggu CAPTCHA muncul
