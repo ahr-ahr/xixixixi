@@ -57,28 +57,20 @@ class EdgeAutomation
         $url1 = 'https://accounts.google.com/signup';
         $url2 = 'https://api64.ipify.org?format=json';
 
-        // Buka window pertama
         $this->driver->get($url1);
 
-        // Buka window baru
         $this->driver->executeScript("window.open('', '_blank');");
 
-        // Pindah ke window kedua
         $windows = $this->driver->getWindowHandles();
         $this->driver->switchTo()->window($windows[1]);
 
-        // Buka URL kedua di window baru
         $this->driver->get($url2);
 
-        // Ambil IP
         $ip = $this->driver->findElement(WebDriverBy::tagName('body'))->getText();
         echo "\nCurrent IP: " . $ip;
 
-        // Kembali ke window pertama
         $this->driver->switchTo()->window($windows[0]);
 
-
-        // Tunggu elemen input "First Name" muncul
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('firstName'))
         );
@@ -199,7 +191,6 @@ class EdgeAutomation
             } catch (NoSuchElementException $e) {
             }
 
-            // Tunggu sampai input nomor telepon muncul
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
             );
@@ -283,32 +274,25 @@ class EdgeAutomation
     private function solveCaptchaWithBuster()
     {
         try {
-            // Tunggu iframe reCAPTCHA muncul
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::cssSelector('iframe[title="reCAPTCHA"]'))
             );
 
-            // Temukan elemen iframe reCAPTCHA
             $captchaFrame = $this->driver->findElement(WebDriverBy::cssSelector('iframe[title="reCAPTCHA"]'));
             $this->driver->switchTo()->frame($captchaFrame);
 
-            // Klik checkbox reCAPTCHA
             $this->driver->findElement(WebDriverBy::cssSelector('.recaptcha-checkbox'))->click();
             sleep(3);
 
-            // Kembali ke konteks utama
             $this->driver->switchTo()->defaultContent();
 
-            // Tunggu challenge muncul dan cari frame challenge
             sleep(5);
             $challengeFrame = $this->driver->findElement(WebDriverBy::cssSelector('iframe[title="recaptcha challenge"]'));
             $this->driver->switchTo()->frame($challengeFrame);
 
-            // Cari dan klik tombol Buster
             $busterButton = $this->driver->findElement(WebDriverBy::cssSelector('button[aria-label="Solve this CAPTCHA"]'));
             $busterButton->click();
 
-            // Tunggu proses selesai
             sleep(15);
             return true;
         } catch (Exception $e) {
@@ -338,7 +322,6 @@ class EdgeAutomation
     }
 }
 
-// Jalankan otomatisasi dengan solver CAPTCHA Buster
 $automation = new EdgeAutomation();
 $automation->fillForm();
 $automation->close();
