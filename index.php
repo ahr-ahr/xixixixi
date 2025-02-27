@@ -86,52 +86,46 @@ class EdgeAutomation
         $firstName = $this->faker->firstName;
         $lastName = $this->faker->lastName;
 
+        sleep(1);
         $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys($firstName);
+        sleep(2.5);
         $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys($lastName);
 
-        // Klik tombol "Next"
+        sleep(0.5);
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        // Tunggu halaman berikutnya (Tanggal Lahir & Gender)
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('day'))
         );
 
-        // Generate tanggal lahir acak antara 18 hingga 50 tahun yang lalu
         $birthDate = $this->faker->dateTimeBetween('-50 years', '-18 years');
         $day = $birthDate->format('d');
-        $month = $birthDate->format('F'); // Format bulan (January, February, dst.)
+        $month = $birthDate->format('F');
         $year = $birthDate->format('Y');
 
-        // Isi Tanggal Lahir (Hari)
         $this->driver->findElement(WebDriverBy::id('day'))->sendKeys($day);
 
-        // Pilih Bulan dari Dropdown
         $monthDropdown = new WebDriverSelect($this->driver->findElement(WebDriverBy::id('month')));
-        $monthDropdown->selectByVisibleText($month); // Memilih bulan sesuai nama (contoh: "January")
+        $monthDropdown->selectByVisibleText($month);
 
-        // Tunggu 1 detik untuk memastikan dropdown tahun tersedia
         sleep(1);
 
-        // Pilih Tahun dari Dropdown
         $this->driver->findElement(WebDriverBy::id('year'))->sendKeys($year);
 
-        // Tunggu 1 detik sebelum memilih gender (opsional)
         sleep(1);
 
-        // Pilih Gender (Male)
         $genderElement = $this->driver->findElement(WebDriverBy::id('gender'));
         if ($genderElement->isDisplayed()) {
             $genderDropdown = new WebDriverSelect($genderElement);
-            $genderDropdown->selectByValue('1'); // "1" biasanya untuk Male
+            $randomGender = rand(1, 2);
+            $genderDropdown->selectByValue((string) $randomGender);
         } else {
             throw new Exception("Dropdown gender tidak ditemukan atau tidak dapat diakses.");
         }
 
-        // Klik tombol "Next"
+        sleep(0.5);
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        // **Buat Username dari First Name + Last Name + Year**
         $username = $firstName . $lastName . $year;
 
         try {
@@ -148,20 +142,18 @@ class EdgeAutomation
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
 
-            // Isi alamat Gmail yang diinginkan
+            sleep(1);
             $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys($username);
 
         } catch (NoSuchElementException $e) {
-            // Jika opsi "Create your own Gmail address" tidak ditemukan, langsung isi username
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
 
-            // Isi Username langsung
+            sleep(1);
             $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys($username);
         }
 
-        // Tunggu tombol Next muncul setelah isi Username atau Email
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
         );
@@ -182,7 +174,9 @@ class EdgeAutomation
 
         $password = $firstName . $randomSymbol1 . $lastName . $randomSymbol2 . $year;
 
+        sleep(2);
         $this->driver->findElement(WebDriverBy::name('Passwd'))->sendKeys($password);
+        sleep(2);
         $this->driver->findElement(WebDriverBy::name('PasswdAgain'))->sendKeys($password);
 
         $this->driver->wait(10)->until(
