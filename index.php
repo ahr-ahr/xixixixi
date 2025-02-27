@@ -191,81 +191,88 @@ class EdgeAutomation
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-
-        // Tunggu sampai input nomor telepon muncul
         $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
         );
+        try {
+            try {
+                $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
+                if ($errorElement->isDisplayed()) {
+                    echo "Akun gagal dibuat. Restarting...\n";
+                    $this->restartProgram();
+                    return;
+                }
+            } catch (NoSuchElementException $e) {
+            }
 
-        // Panggil API 5sim untuk membeli nomor
-        $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-        $country = 'indonesia'; // Atau 'any'
-        $operator = 'virtual52'; // Bisa spesifik operator
-        $product = 'google';
+            // Tunggu sampai input nomor telepon muncul
+            $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
+            );
 
-        $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
-        $headers = [
-            "Authorization: Bearer $token",
-            "Accept: application/json"
-        ];
+            $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
+            $country = 'indonesia';
+            $operator = 'virtual52';
+            $product = 'google';
 
-        // Request ke API 5sim untuk mendapatkan nomor
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $apiUrl);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
-        curl_close($ch);
+            $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
+            $headers = [
+                "Authorization: Bearer $token",
+                "Accept: application/json"
+            ];
 
-        $data = json_decode($response, true);
-
-        if (isset($data['phone'])) {
-            $phoneNumber = $data['phone'];
-        } else {
-            die("Gagal mendapatkan nomor dari API 5sim");
-        }
-
-        // Masukkan nomor telepon ke input
-        $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
-        $phoneNumberInput->click();
-        $phoneNumberInput->sendKeys($phoneNumber);
-
-        // Klik tombol "Next"
-        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
-
-        // Tunggu hingga input OTP muncul
-        $this->driver->wait(15)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
-        );
-
-        // Cek OTP dari API 5sim
-        $orderId = $data['id']; // ID order dari 5sim
-        $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
-
-        do {
-            sleep(5); // Cek setiap 5 detik
             $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+            curl_setopt($ch, CURLOPT_URL, $apiUrl);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $otpResponse = curl_exec($ch);
+            $response = curl_exec($ch);
             curl_close($ch);
 
-            $otpData = json_decode($otpResponse, true);
-            $otp = $otpData['sms'][0]['code'] ?? null;
-        } while (!$otp);
+            $data = json_decode($response, true);
 
-        // Masukkan OTP ke input
-        $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
-        $otpInput->sendKeys($otp);
+            if (isset($data['phone'])) {
+                $phoneNumber = $data['phone'];
+            } else {
+                die("Gagal mendapatkan nomor dari API 5sim");
+            }
 
-        // Klik tombol "Next"
-        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+            $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
+            $phoneNumberInput->click();
+            $phoneNumberInput->sendKeys($phoneNumber);
 
-        echo "Verifikasi berhasil!";
+            $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
+            $this->driver->wait(15)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
+            );
 
-        // Tunggu CAPTCHA muncul
+            $orderId = $data['id'];
+            $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
+
+            do {
+                sleep(5);
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $otpResponse = curl_exec($ch);
+                curl_close($ch);
+
+                $otpData = json_decode($otpResponse, true);
+                $otp = $otpData['sms'][0]['code'] ?? null;
+            } while (!$otp);
+
+            $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+            $otpInput->sendKeys($otp);
+
+            $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+            echo "Verifikasi berhasil!";
+        } catch (Exception $e) {
+            echo "Terjadi error: " . $e->getMessage();
+            $this->restartProgram();
+        }
+
         sleep(30);
 
         // // Coba selesaikan CAPTCHA dengan ekstensi Buster
@@ -313,6 +320,22 @@ class EdgeAutomation
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    private function restartProgram()
+    {
+        // Tutup WebDriver
+        $this->driver->quit();
+
+        // Restart program (Windows)
+        if (PHP_OS_FAMILY === 'Windows') {
+            exec("start /B php " . __FILE__);
+        } else {
+            // Restart program (Linux/macOS)
+            exec("php " . __FILE__ . " > /dev/null 2>&1 &");
+        }
+
+        exit();
     }
 
     public function close()
