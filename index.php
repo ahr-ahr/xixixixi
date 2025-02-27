@@ -30,7 +30,7 @@ class EdgeAutomation
         $options->addArguments([
             "--user-agent=$randomUserAgent",
             '--user-data-dir="C:\\Users\\AHMAD~1\\AppData\\Local\\Microsoft\\Edge\\User Data"',
-            //"--proxy-server=$proxyApiUrl", // Langsung gunakan API proxy
+            "--proxy-server=$proxyApiUrl",
             '--profile-directory="Profile 1"',
             '--load-extension=' . $extensionPath,
             '--disable-popup-blocking',
@@ -121,15 +121,12 @@ class EdgeAutomation
         $username = $firstName . $lastName . $year;
 
         try {
-            // Tunggu elemen pilihan alamat Gmail atau opsi buat sendiri muncul
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath('//div[@jsname="CeL6Qc" and contains(text(), "Create your own Gmail address")]'))
             );
 
-            // Klik opsi "Create your own Gmail address"
             $this->driver->findElement(WebDriverBy::xpath('//div[@jsname="CeL6Qc" and contains(text(), "Create your own Gmail address")]'))->click();
 
-            // Tunggu input email muncul
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
@@ -176,6 +173,14 @@ class EdgeAutomation
         );
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+        echo $firstName;
+        echo $lastName;
+        echo $day;
+        echo $month;
+        echo $year;
+        echo $username;
+        echo $password;
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
