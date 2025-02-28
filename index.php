@@ -21,40 +21,45 @@ class EdgeAutomation
         $this->faker = Faker::create();
         $options = new ChromeOptions();
 
-        $extensionPath = "C:\\xampp\\htdocs\\xixixixi\\admkpobhocmdideidcndkfaeffadipkc";
-
+        $extensionPath = "C:/xampp/htdocs/xixixixi/admkpobhocmdideidcndkfaeffadipkc";
         $randomUserAgent = $this->faker->userAgent;
+        $proxyServer = "http://139.255.64.140:80";
 
-        $proxyApiUrl = "http://127.0.0.1:10101/api/proxy?t=2&num=1&country=ID";
+        if (!file_exists($extensionPath)) {
+            die("❌ ERROR: Folder ekstensi tidak ditemukan - $extensionPath\n");
+        }
+        if (!is_readable($extensionPath)) {
+            die("❌ ERROR: Folder ekstensi tidak dapat dibaca - $extensionPath\n");
+        }
+
+        echo "✅ Folder ekstensi dapat diakses!\n";
 
         $options->addArguments([
             "--user-agent=$randomUserAgent",
-            '--user-data-dir="C:\\Users\\AHMAD~1\\AppData\\Local\\Microsoft\\Edge\\User Data"',
-            "--proxy-server=$proxyApiUrl",
-            '--profile-directory="Profile 1"',
-            '--load-extension=' . $extensionPath,
-            '--disable-popup-blocking',
-            '--disable-notifications',
+            //"--proxy-server=$proxyServer",
+            "--load-extension=$extensionPath",
+            "--disable-popup-blocking",
+            "--disable-notifications",
             "--ignore-certificate-errors",
             "--no-sandbox",
             "--disable-gpu",
-            "--disable-dev-shm-usage",
-            "--proxy-bypass-list=*"
+            "--disable-dev-shm-usage"
         ]);
 
-        $options->addExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
-        $options->addEncodedExtensions(['C:\xampp\htdocs\xixixixi\3.1.0_0.crx']);
-
-        $capabilities = DesiredCapabilities::microsoftEdge();
+        $capabilities = DesiredCapabilities::chrome();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
 
         $this->driver = RemoteWebDriver::create('http://localhost:9515', $capabilities);
-        echo "Current User-Agent: " . $randomUserAgent;
+
+        echo "✅ Chrome Selenium sudah berjalan dengan ekstensi. Silakan periksa manual di browser!\n";
+
+        sleep(5);
     }
+
 
     public function fillForm()
     {
-        $url1 = 'https://accounts.google.com/signup';
+        $url1 = 'https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp';
         $url2 = 'https://api64.ipify.org?format=json';
 
         $this->driver->get($url1);
@@ -174,13 +179,13 @@ class EdgeAutomation
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        echo $firstName;
-        echo $lastName;
-        echo $day;
-        echo $month;
-        echo $year;
-        echo $username;
-        echo $password;
+        echo "\n" . $firstName;
+        echo "\n" . $lastName;
+        echo "\n" . $day;
+        echo "\n" . $month;
+        echo "\n" . $year;
+        echo "\n" . $username;
+        echo "\n" . $password;
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
@@ -257,9 +262,9 @@ class EdgeAutomation
 
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-            echo "Verifikasi berhasil!";
+            echo "\nVerifikasi berhasil!";
         } catch (Exception $e) {
-            echo "Terjadi error: " . $e->getMessage();
+            echo "\nTerjadi error: " . $e->getMessage();
             $this->restartProgram();
         }
 
