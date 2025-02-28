@@ -11,7 +11,7 @@ use Facebook\WebDriver\WebDriverSelect;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Faker\Factory as Faker;
 
-class EdgeAutomation
+class xixixixi
 {
     private $driver;
     private $faker;
@@ -24,7 +24,6 @@ class EdgeAutomation
         $extensionPath = "C:/xampp/htdocs/xixixixi/admkpobhocmdideidcndkfaeffadipkc";
         $randomUserAgent = $this->faker->userAgent;
 
-        // Konfigurasi proxy
         $useApiProxy = true;  // Gunakan proxy dari API
         $useAuthSocks = false; // Gunakan SOCKS5 dengan user:pass
         $useNoAuthSocks = false; // Gunakan SOCKS5 tanpa user:pass
@@ -37,29 +36,24 @@ class EdgeAutomation
         if ($useApiProxy) {
             $apiUrl = "http://127.0.0.1:2007/api/proxy?t=2&num=1&country=ID";
 
-            // Ambil data dari API dengan error handling
             $response = @file_get_contents($apiUrl);
             if ($response === false) {
                 die("❌ ERROR: Gagal menghubungi API.");
             }
 
-            // Decode JSON dan pastikan valid
             $data = json_decode($response, true);
             if (!is_array($data)) {
                 die("❌ ERROR: Respon API bukan JSON yang valid.");
             }
 
-            // Tangani berbagai kode error dari API
             if ($data['error']) {
                 die("❌ ERROR: " . $data['message']);
             }
 
-            // Pastikan ada data proxy
             if (!isset($data['data']) || empty($data['data'])) {
                 die("❌ ERROR: Tidak ada proxy yang tersedia.");
             }
 
-            // Ambil proxy pertama dari list
             $proxyServer = "http://" . $data['data'][0];
         } elseif ($useAuthSocks) {
             $proxyServer = "socks5://user:pass@ip:port";
@@ -75,7 +69,6 @@ class EdgeAutomation
             $proxyServer = "https://ip:port";
         }
 
-        // Tambahkan opsi Chrome
         $options->addArguments([
             "--user-agent=$randomUserAgent",
             "--proxy-server=$proxyServer",
@@ -88,7 +81,6 @@ class EdgeAutomation
             "--disable-dev-shm-usage"
         ]);
 
-        // Buat WebDriver dengan opsi
         $capabilities = DesiredCapabilities::chrome();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
         $this->driver = RemoteWebDriver::create('http://localhost:9515', $capabilities);
@@ -370,7 +362,7 @@ class EdgeAutomation
     }
 }
 
-$automation = new EdgeAutomation();
+$automation = new xixixixi();
 $automation->fillForm();
 $automation->close();
 
