@@ -23,20 +23,62 @@ class EdgeAutomation
 
         $extensionPath = "C:/xampp/htdocs/xixixixi/admkpobhocmdideidcndkfaeffadipkc";
         $randomUserAgent = $this->faker->userAgent;
-        $proxyServer = "http://139.255.64.140:80";
 
-        if (!file_exists($extensionPath)) {
-            die("❌ ERROR: Folder ekstensi tidak ditemukan - $extensionPath\n");
+        // Konfigurasi proxy
+        $useApiProxy = true;  // Gunakan proxy dari API
+        $useAuthSocks = false; // Gunakan SOCKS5 dengan user:pass
+        $useNoAuthSocks = false; // Gunakan SOCKS5 tanpa user:pass
+        $useAuthHttp = false; // Gunakan HTTP Proxy dengan user:pass
+        $useNoAuthHttp = false; // Gunakan Http tanpa autentikasi
+        $useAuthHttps = false; // Gunakan HTTPS Proxy dengan user:pass
+        $useNoAuthHttps = false; // Gunakan HTTPS Proxy tanpa autentikasi
+        $proxyServer = "";
+
+        if ($useApiProxy) {
+            $apiUrl = "http://127.0.0.1:2007/api/proxy?t=2&num=1&country=ID";
+
+            // Ambil data dari API dengan error handling
+            $response = @file_get_contents($apiUrl);
+            if ($response === false) {
+                die("❌ ERROR: Gagal menghubungi API.");
+            }
+
+            // Decode JSON dan pastikan valid
+            $data = json_decode($response, true);
+            if (!is_array($data)) {
+                die("❌ ERROR: Respon API bukan JSON yang valid.");
+            }
+
+            // Tangani berbagai kode error dari API
+            if ($data['error']) {
+                die("❌ ERROR: " . $data['message']);
+            }
+
+            // Pastikan ada data proxy
+            if (!isset($data['data']) || empty($data['data'])) {
+                die("❌ ERROR: Tidak ada proxy yang tersedia.");
+            }
+
+            // Ambil proxy pertama dari list
+            $proxyServer = "http://" . $data['data'][0];
+        } elseif ($useAuthSocks) {
+            $proxyServer = "socks5://user:pass@ip:port";
+        } elseif ($useNoAuthSocks) {
+            $proxyServer = "socks5://ip:port";
+        } elseif ($useAuthHttp) {
+            $proxyServer = "http://user:pass@ip:port";
+        } elseif ($useNoAuthHttp) {
+            $proxyServer = "http://ip:port";
+        } elseif ($useAuthHttps) {
+            $proxyServer = "https://user:pass@ip:port";
+        } elseif ($useNoAuthHttps) {
+            $proxyServer = "https://ip:port";
         }
-        if (!is_readable($extensionPath)) {
-            die("❌ ERROR: Folder ekstensi tidak dapat dibaca - $extensionPath\n");
-        }
 
-        echo "✅ Folder ekstensi dapat diakses!\n";
-
+        // Tambahkan opsi Chrome
         $options->addArguments([
             "--user-agent=$randomUserAgent",
-            //"--proxy-server=$proxyServer",
+            "--proxy-server=$proxyServer",
             "--load-extension=$extensionPath",
             "--disable-popup-blocking",
             "--disable-notifications",
@@ -46,16 +88,15 @@ class EdgeAutomation
             "--disable-dev-shm-usage"
         ]);
 
+        // Buat WebDriver dengan opsi
         $capabilities = DesiredCapabilities::chrome();
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
-
         $this->driver = RemoteWebDriver::create('http://localhost:9515', $capabilities);
 
-        echo "✅ Chrome Selenium sudah berjalan dengan ekstensi. Silakan periksa manual di browser!\n";
+        echo "✅ Chrome Selenium sudah berjalan dengan ekstensi & proxy: $proxyServer\n";
 
         sleep(5);
     }
-
 
     public function fillForm()
     {
@@ -312,14 +353,11 @@ class EdgeAutomation
 
     private function restartProgram()
     {
-        // Tutup WebDriver
         $this->driver->quit();
 
-        // Restart program (Windows)
         if (PHP_OS_FAMILY === 'Windows') {
             exec("start /B php " . __FILE__);
         } else {
-            // Restart program (Linux/macOS)
             exec("php " . __FILE__ . " > /dev/null 2>&1 &");
         }
 
