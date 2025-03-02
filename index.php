@@ -24,9 +24,9 @@ class xixixixi
         $extensionPath = "C:/xampp/htdocs/xixixixi/admkpobhocmdideidcndkfaeffadipkc";
         $randomUserAgent = $this->faker->userAgent;
 
-        $useApiProxy = true;  // Gunakan proxy dari API
+        $useApiProxy = false;  // Gunakan proxy dari API
         $useAuthSocks = false; // Gunakan SOCKS5 dengan user:pass
-        $useNoAuthSocks = false; // Gunakan SOCKS5 tanpa user:pass
+        $useNoAuthSocks = true; // Gunakan SOCKS5 tanpa user:pass
         $useAuthHttp = false; // Gunakan HTTP Proxy dengan user:pass
         $useNoAuthHttp = false; // Gunakan Http tanpa autentikasi
         $useAuthHttps = false; // Gunakan HTTPS Proxy dengan user:pass
@@ -36,7 +36,7 @@ class xixixixi
         if ($useApiProxy) {
             $apiUrl = "http://127.0.0.1:2007/api/proxy?t=2&num=1&country=ID";
 
-            $response = @file_get_contents($apiUrl);
+            $response = file_get_contents($apiUrl);
             if ($response === false) {
                 die("❌ ERROR: Gagal menghubungi API.");
             }
@@ -58,7 +58,7 @@ class xixixixi
         } elseif ($useAuthSocks) {
             $proxyServer = "socks5://user:pass@ip:port";
         } elseif ($useNoAuthSocks) {
-            $proxyServer = "socks5://ip:port";
+            $proxyServer = "socks5://127.0.0.1:10000";
         } elseif ($useAuthHttp) {
             $proxyServer = "http://user:pass@ip:port";
         } elseif ($useNoAuthHttp) {
@@ -212,13 +212,26 @@ class xixixixi
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        echo "\n" . $firstName;
-        echo "\n" . $lastName;
-        echo "\n" . $day;
-        echo "\n" . $month;
-        echo "\n" . $year;
-        echo "\n" . $username;
-        echo "\n" . $password;
+        // echo "\n" . $firstName;
+        // echo "\n" . $lastName;
+        // echo "\n" . $day;
+        // echo "\n" . $month;
+        // echo "\n" . $year;
+        // echo "\n" . $username;
+        // echo "\n" . $password;
+
+        $data = [
+            $firstName,
+            $lastName,
+            $day,
+            $month,
+            $year,
+            $username,
+            $password
+        ];
+
+        $this->saveToCsv($data);
+
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
@@ -233,6 +246,25 @@ class xixixixi
                 }
             } catch (NoSuchElementException $e) {
             }
+
+            // Tunggu hingga dropdown negara muncul
+            $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('countryList'))
+            );
+
+            // Klik dropdown untuk membuka daftar negara
+            $dropdown = $this->driver->findElement(WebDriverBy::id('countryList'));
+            $dropdown->click();
+
+            // Tunggu hingga opsi Indonesia muncul
+            $this->driver->wait(5)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath("//span[contains(text(), 'Indonesia (+62)')]"))
+            );
+
+            // Pilih Indonesia (+62)
+            $indonesiaOption = $this->driver->findElement(WebDriverBy::xpath("//span[contains(text(), 'Indonesia (+62)')]"));
+            $indonesiaOption->click();
+
 
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
@@ -342,6 +374,43 @@ class xixixixi
             return false;
         }
     }
+
+    private function saveToCsv($data)
+    {
+        $filePath = 'accounts.csv';
+
+        $isFileEmpty = !file_exists($filePath) || filesize($filePath) === 0;
+
+        $file = fopen($filePath, 'a+');
+
+        if (filesize($filePath) === 0) {
+            fwrite($file, "\xEF\xBB\xBF");
+        }
+
+        if ($isFileEmpty) {
+            fputcsv($file, ['Timestamp', 'First Name', 'Last Name', 'Day', 'Month', 'Year', 'Username', 'Password']);
+        }
+
+        $data = array_merge([date('Y-m-d H:i:s')], $data);
+
+        fputcsv($file, $data);
+
+        fclose($file);
+    }
+
+
+    // $data = [
+    //     $firstName,
+    //     $lastName,
+    //     $day,
+    //     $month,
+    //     $year,
+    //     $username,
+    //     $password
+    // ];
+
+    // $this->saveToCsv($data);
+
 
     private function restartProgram()
     {
