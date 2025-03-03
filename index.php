@@ -212,6 +212,8 @@ class xixixixi
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
         $username = $firstName . $lastName . $year;
+        $maxAttempts = 2;
+        $attempt = 0;
 
         try {
             $this->driver->wait(10)->until(
@@ -224,17 +226,36 @@ class xixixixi
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
 
-            sleep(1);
-            $this->slowType($this->driver->findElement(WebDriverBy::name('Username')), $username);
-
         } catch (NoSuchElementException $e) {
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
-
-            sleep(1);
-            $this->slowType($this->driver->findElement(WebDriverBy::name('Username')), $username);
         }
+
+        while ($attempt < $maxAttempts) {
+            sleep(1);
+            $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
+            $usernameField->clear();
+            $this->slowType($usernameField, $username);
+
+            usleep(rand(500000, 1500000));
+
+            try {
+                $this->driver->wait(3)->until(
+                    WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath('//div[contains(text(), "That username is taken")]'))
+                );
+
+                $username .= "ahr";
+                $attempt++;
+            } catch (Exception $e) {
+                break;
+            }
+        }
+
+        if ($attempt >= $maxAttempts) {
+            throw new Exception("Gagal mendapatkan username yang tersedia setelah $maxAttempts percobaan.");
+        }
+
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
@@ -288,7 +309,7 @@ class xixixixi
                     return;
                 }
             } catch (NoSuchElementException $e) {
-                echo "TES";
+                echo "\nAkun gagal dibuat. Restarting...\n";
             }
 
             $this->driver->wait(10)->until(
