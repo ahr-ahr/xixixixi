@@ -10,6 +10,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverSelect;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Faker\Factory as Faker;
+use Facebook\WebDriver\Interactions\WebDriverActions;
 
 class xixixixi
 {
@@ -26,7 +27,7 @@ class xixixixi
 
         $useApiProxy = false;  // Gunakan proxy dari API
         $useAuthSocks = false; // Gunakan SOCKS5 dengan user:pass
-        $useNoAuthSocks = true; // Gunakan SOCKS5 tanpa user:pass
+        $useNoAuthSocks = false; // Gunakan SOCKS5 tanpa user:pass
         $useAuthHttp = false; // Gunakan HTTP Proxy dengan user:pass
         $useNoAuthHttp = false; // Gunakan Http tanpa autentikasi
         $useAuthHttps = false; // Gunakan HTTPS Proxy dengan user:pass
@@ -87,7 +88,15 @@ class xixixixi
 
         echo "✅ Chrome Selenium sudah berjalan dengan ekstensi & proxy: $proxyServer\n";
 
-        sleep(5);
+        sleep(rand(2, 5));
+    }
+
+    private function slowType($element, $text)
+    {
+        foreach (str_split($text) as $char) {
+            $element->sendKeys($char);
+            usleep(rand(100000, 300000)); // Simulasi mengetik (100-300ms per karakter)
+        }
     }
 
     public function fillForm()
@@ -116,16 +125,27 @@ class xixixixi
         $firstName = $this->faker->firstName;
         $lastName = $this->faker->lastName;
 
-        sleep(1);
-        $this->driver->findElement(WebDriverBy::name('firstName'))->sendKeys($firstName);
-        sleep(2.5);
-        $this->driver->findElement(WebDriverBy::name('lastName'))->sendKeys($lastName);
+        $actions = new WebDriverActions($this->driver);
+        $firstNameField = $this->driver->findElement(WebDriverBy::name('firstName'));
+        $lastNameField = $this->driver->findElement(WebDriverBy::name('lastName'));
 
-        sleep(0.5);
-        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+        $actions->moveToElement($firstNameField)->perform();
+        sleep(rand(1, 2));
+        $this->slowType($firstNameField, $firstName);
+
+        $actions->moveToElement($lastNameField)->perform();
+        sleep(rand(1, 3));
+        $this->slowType($lastNameField, $lastName);
+
+        sleep(rand(1, 3));
+
+        $nextButton = $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'));
+        $actions->moveToElement($nextButton)->perform();
+        sleep(rand(1, 3));
+        $nextButton->click();
 
         $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('day'))
+            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('day'))
         );
 
         $birthDate = $this->faker->dateTimeBetween('-50 years', '-18 years');
@@ -133,27 +153,62 @@ class xixixixi
         $month = $birthDate->format('F');
         $year = $birthDate->format('Y');
 
-        $this->driver->findElement(WebDriverBy::id('day'))->sendKeys($day);
+        sleep(1);
 
-        $monthDropdown = new WebDriverSelect($this->driver->findElement(WebDriverBy::id('month')));
-        $monthDropdown->selectByVisibleText($month);
+        $this->slowType($this->driver->findElement(WebDriverBy::id('day')), $day);
+
+        $monthElement = $this->driver->findElement(WebDriverBy::id('month'));
+
+        if ($monthElement->isDisplayed()) {
+            $action = new WebDriverActions($this->driver);
+            $action->moveToElement($monthElement)->perform();
+
+            usleep(rand(500000, 1500000));
+
+            $monthElement->click();
+
+            usleep(rand(500000, 1000000));
+
+            $monthDropdown = new WebDriverSelect($monthElement);
+            $monthDropdown->selectByVisibleText($month);
+
+            usleep(rand(500000, 1000000));
+        } else {
+            throw new Exception("Dropdown bulan tidak ditemukan atau tidak dapat diakses.");
+        }
+
 
         sleep(1);
 
-        $this->driver->findElement(WebDriverBy::id('year'))->sendKeys($year);
+        $this->slowType($this->driver->findElement(WebDriverBy::id('year')), $year);
 
         sleep(1);
 
         $genderElement = $this->driver->findElement(WebDriverBy::id('gender'));
+
         if ($genderElement->isDisplayed()) {
+            $action = new WebDriverActions($this->driver);
+            $action->moveToElement($genderElement)->perform();
+
+            usleep(rand(500000, 1500000));
+
             $genderDropdown = new WebDriverSelect($genderElement);
             $randomGender = rand(1, 2);
+
+            $genderElement->click();
+
+            usleep(rand(500000, 1500000));
+
             $genderDropdown->selectByValue((string) $randomGender);
+
+            usleep(rand(500000, 1000000));
         } else {
             throw new Exception("Dropdown gender tidak ditemukan atau tidak dapat diakses.");
         }
 
-        sleep(0.5);
+
+        sleep(1);
+
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
         $username = $firstName . $lastName . $year;
@@ -170,7 +225,7 @@ class xixixixi
             );
 
             sleep(1);
-            $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys($username);
+            $this->slowType($this->driver->findElement(WebDriverBy::name('Username')), $username);
 
         } catch (NoSuchElementException $e) {
             $this->driver->wait(10)->until(
@@ -178,12 +233,14 @@ class xixixixi
             );
 
             sleep(1);
-            $this->driver->findElement(WebDriverBy::name('Username'))->sendKeys($username);
+            $this->slowType($this->driver->findElement(WebDriverBy::name('Username')), $username);
         }
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
         );
+
+        sleep(rand(1, 3));
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
@@ -195,43 +252,29 @@ class xixixixi
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('PasswdAgain'))
         );
 
+        sleep(1);
+
+        $checkboxContainer = $this->driver->findElement(WebDriverBy::cssSelector('div[jsname="ornU0b"]'));
+        $checkboxContainer->click();
+
         $specialChars = ['!', '?', '@', '#', '$', '%', '^', '&', '*'];
         $randomSymbol1 = $specialChars[array_rand($specialChars)];
         $randomSymbol2 = $specialChars[array_rand($specialChars)];
 
         $password = $firstName . $randomSymbol1 . $lastName . $randomSymbol2 . $year;
 
-        sleep(2);
-        $this->driver->findElement(WebDriverBy::name('Passwd'))->sendKeys($password);
-        sleep(2);
-        $this->driver->findElement(WebDriverBy::name('PasswdAgain'))->sendKeys($password);
+        sleep(rand(1, 3));
+        $this->slowType($this->driver->findElement(WebDriverBy::name('Passwd')), $password);
+        sleep(rand(1, 3));
+        $this->slowType($this->driver->findElement(WebDriverBy::name('PasswdAgain')), $password);
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
         );
 
+        sleep(rand(1, 3));
+
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
-
-        // echo "\n" . $firstName;
-        // echo "\n" . $lastName;
-        // echo "\n" . $day;
-        // echo "\n" . $month;
-        // echo "\n" . $year;
-        // echo "\n" . $username;
-        // echo "\n" . $password;
-
-        $data = [
-            $firstName,
-            $lastName,
-            $day,
-            $month,
-            $year,
-            $username,
-            $password
-        ];
-
-        $this->saveToCsv($data);
-
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
@@ -245,26 +288,8 @@ class xixixixi
                     return;
                 }
             } catch (NoSuchElementException $e) {
+                echo "TES";
             }
-
-            // Tunggu hingga dropdown negara muncul
-            $this->driver->wait(10)->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('countryList'))
-            );
-
-            // Klik dropdown untuk membuka daftar negara
-            $dropdown = $this->driver->findElement(WebDriverBy::id('countryList'));
-            $dropdown->click();
-
-            // Tunggu hingga opsi Indonesia muncul
-            $this->driver->wait(5)->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath("//span[contains(text(), 'Indonesia (+62)')]"))
-            );
-
-            // Pilih Indonesia (+62)
-            $indonesiaOption = $this->driver->findElement(WebDriverBy::xpath("//span[contains(text(), 'Indonesia (+62)')]"));
-            $indonesiaOption->click();
-
 
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
@@ -272,7 +297,7 @@ class xixixixi
 
             $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
             $country = 'indonesia';
-            $operator = 'virtual52';
+            $operator = 'any';
             $product = 'google';
 
             $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
@@ -290,11 +315,12 @@ class xixixixi
 
             $data = json_decode($response, true);
 
-            if (isset($data['phone'])) {
-                $phoneNumber = $data['phone'];
-            } else {
+            if (!isset($data['phone'])) {
                 die("Gagal mendapatkan nomor dari API 5sim");
             }
+
+            $phoneNumber = $data['phone'];
+            $orderId = $data['id'];
 
             $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
             $phoneNumberInput->click();
@@ -302,11 +328,31 @@ class xixixixi
 
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
+            sleep(5);
+
+            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times')]"));
+            if (count($errorElements) > 0) {
+                echo "\nNomor sudah terlalu sering digunakan, membatalkan order...\n";
+
+                $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
+
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+                $banResponse = curl_exec($ch);
+                curl_close($ch);
+
+                echo "Order $orderId berhasil dibanned.\n";
+
+                $this->restartProgram();
+            }
+
             $this->driver->wait(15)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
             );
 
-            $orderId = $data['id'];
             $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
 
             do {
@@ -333,7 +379,19 @@ class xixixixi
             $this->restartProgram();
         }
 
-        sleep(30);
+        $data = [
+            $firstName,
+            $lastName,
+            $day,
+            $month,
+            $year,
+            $username,
+            $password
+        ];
+
+        $this->saveToCsv($data);
+
+        sleep(60);
 
         // // Coba selesaikan CAPTCHA dengan ekstensi Buster
         // if ($this->solveCaptchaWithBuster()) {
@@ -379,37 +437,25 @@ class xixixixi
     {
         $filePath = 'accounts.csv';
 
+        date_default_timezone_set('Asia/Jakarta');
+
         $isFileEmpty = !file_exists($filePath) || filesize($filePath) === 0;
 
         $file = fopen($filePath, 'a+');
 
-        if (filesize($filePath) === 0) {
-            fwrite($file, "\xEF\xBB\xBF");
-        }
-
         if ($isFileEmpty) {
+            fwrite($file, "\xEF\xBB\xBF");
             fputcsv($file, ['Timestamp', 'First Name', 'Last Name', 'Day', 'Month', 'Year', 'Username', 'Password']);
         }
 
-        $data = array_merge([date('Y-m-d H:i:s')], $data);
+        $timestamp = date('Y-m-d H:i:s');
+        $paddedData = array_map(fn($item) => str_pad($item, 20, ' ', STR_PAD_RIGHT), $data);
 
-        fputcsv($file, $data);
+        fputcsv($file, array_merge([$timestamp], $paddedData));
 
         fclose($file);
     }
 
-
-    // $data = [
-    //     $firstName,
-    //     $lastName,
-    //     $day,
-    //     $month,
-    //     $year,
-    //     $username,
-    //     $password
-    // ];
-
-    // $this->saveToCsv($data);
 
 
     private function restartProgram()
