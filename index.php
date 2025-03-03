@@ -11,6 +11,7 @@ use Facebook\WebDriver\WebDriverSelect;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Faker\Factory as Faker;
 use Facebook\WebDriver\Interactions\WebDriverActions;
+use Facebook\WebDriver\Exception\TimeoutException;
 
 class xixixixi
 {
@@ -79,7 +80,11 @@ class xixixixi
             "--ignore-certificate-errors",
             "--no-sandbox",
             "--disable-gpu",
-            "--disable-dev-shm-usage"
+            "--disable-dev-shm-usage",
+            '--disable-blink-features=AutomationControlled', // Hilangkan flag otomatisasi
+            '--start-maximized', // Buka browser dalam mode maksimal
+            '--disable-infobars', // Hilangkan notifikasi otomatisasi
+            '--disable-dev-shm-usage' // Optimasi resource
         ]);
 
         $capabilities = DesiredCapabilities::chrome();
@@ -95,27 +100,100 @@ class xixixixi
     {
         foreach (str_split($text) as $char) {
             $element->sendKeys($char);
-            usleep(rand(100000, 300000)); // Simulasi mengetik (100-300ms per karakter)
+            usleep(rand(100000, 300000));
         }
     }
 
     public function fillForm()
     {
-        $url1 = 'https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp';
-        $url2 = 'https://api64.ipify.org?format=json';
+        //$url1 = 'https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp';
+        $url1 = 'https://accounts.google.com/signup';
+        $url3 = 'https://httpbin.org/user-agent';
+        $url4 = 'https://ipapi.co/json/';
 
         $this->driver->get($url1);
-
         $this->driver->executeScript("window.open('', '_blank');");
 
         $windows = $this->driver->getWindowHandles();
         $this->driver->switchTo()->window($windows[1]);
 
-        $this->driver->get($url2);
+        try {
+            $this->driver->get($url3);
+            $userAgentJson = $this->driver->findElement(WebDriverBy::tagName('body'))->getText();
+            $userAgentData = json_decode($userAgentJson, true);
+            $userAgent = $userAgentData['user-agent'] ?? 'Tidak dapat mengambil User-Agent';
 
-        $ip = $this->driver->findElement(WebDriverBy::tagName('body'))->getText();
-        echo "\nCurrent IP: " . $ip;
+            $this->driver->get($url4);
+            $locationJson = $this->driver->findElement(WebDriverBy::tagName('body'))->getText();
+            $locationData = json_decode($locationJson, true);
+            sleep(3);
 
+            if (!is_array($locationData)) {
+                throw new Exception("Gagal mengambil data lokasi.");
+            }
+
+            $ip = $locationData['ip'] ?? 'Unknown';
+            $network = $locationData['network'] ?? 'Unknown';
+            $version = $locationData['version'] ?? 'Unknown';
+            $city = $locationData['city'] ?? 'Unknown';
+            $region = $locationData['region'] ?? 'Unknown';
+            $region_code = $locationData['region_code'] ?? 'Unknown';
+            $country = $locationData['country_name'] ?? 'Unknown';
+            $country_code = $locationData['country_code'] ?? 'Unknown';
+            $country_code_iso3 = $locationData['country_code_iso3'] ?? 'Unknown';
+            $country_capital = $locationData['country_capital'] ?? 'Unknown';
+            $country_tld = $locationData['country_tld'] ?? 'Unknown';
+            $continent_code = $locationData['continent_code'] ?? 'Unknown';
+            $in_eu = $locationData['in_eu'] ? 'Yes' : 'No';
+            $postal = $locationData['postal'] ?? 'Unknown';
+            $latitude = $locationData['latitude'] ?? 'Unknown';
+            $longitude = $locationData['longitude'] ?? 'Unknown';
+            $timezone = $locationData['timezone'] ?? 'Unknown';
+            $utc_offset = $locationData['utc_offset'] ?? 'Unknown';
+            $country_calling_code = $locationData['country_calling_code'] ?? 'Unknown';
+            $currency = $locationData['currency'] ?? 'Unknown';
+            $currency_name = $locationData['currency_name'] ?? 'Unknown';
+            $languages = $locationData['languages'] ?? 'Unknown';
+            $country_area = $locationData['country_area'] ?? 'Unknown';
+            $country_population = $locationData['country_population'] ?? 'Unknown';
+            $asn = $locationData['asn'] ?? 'Unknown';
+            $org = $locationData['org'] ?? 'Unknown';
+
+            echo "\n=======================================\n";
+            echo " 🌍 IP Information & User Agent\n";
+            echo " - IP Address       : $ip \n";
+            echo " - Network          : $network \n";
+            echo " - IP Version       : $version \n";
+            echo " - User-Agent: $userAgent \n";
+            echo "\n📍 Location\n";
+            echo " - City            : $city \n";
+            echo " - Region          : $region ($region_code) \n";
+            echo " - Country         : $country ($country_code / $country_code_iso3) \n";
+            echo " - Country TLD      : $country_tld \n";
+            echo " - Capital         : $country_capital \n";
+            echo " - Continent Code  : $continent_code \n";
+            echo " - In EU?          : $in_eu \n";
+            echo " - Postal Code     : $postal \n";
+            echo " - Latitude        : $latitude \n";
+            echo " - Longitude       : $longitude \n";
+            echo "\n🕒 Time & Currency\n";
+            echo " - Timezone        : $timezone \n";
+            echo " - UTC Offset      : $utc_offset \n";
+            echo " - Currency        : $currency ($currency_name) \n";
+            echo " - Calling Code    : $country_calling_code \n";
+            echo "\n🌐 Additional Info\n";
+            echo " - Languages       : $languages \n";
+            echo " - Country Area    : $country_area km² \n";
+            echo " - Population      : $country_population \n";
+            echo " - ISP/Org         : $org \n";
+            echo " - ASN             : $asn \n";
+            echo "=======================================\n";
+
+        } catch (Exception $e) {
+            echo "\n❌ Error: " . $e->getMessage() . "\n";
+        }
+
+        $this->driver->close();
         $this->driver->switchTo()->window($windows[0]);
 
         $this->driver->wait(10)->until(
@@ -141,10 +219,10 @@ class xixixixi
 
         $nextButton = $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'));
         $actions->moveToElement($nextButton)->perform();
-        sleep(rand(1, 3));
+        sleep(rand(1, 2));
         $nextButton->click();
 
-        $this->driver->wait(10)->until(
+        $this->driver->wait(20)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('day'))
         );
 
@@ -153,7 +231,7 @@ class xixixixi
         $month = $birthDate->format('F');
         $year = $birthDate->format('Y');
 
-        sleep(1);
+        sleep(2);
 
         $this->slowType($this->driver->findElement(WebDriverBy::id('day')), $day);
 
@@ -241,13 +319,17 @@ class xixixixi
             usleep(rand(500000, 1500000));
 
             try {
-                $this->driver->wait(3)->until(
-                    WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath('//div[contains(text(), "That username is taken")]'))
+                $this->driver->wait(5)->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(
+                        WebDriverBy::xpath('//div[contains(translate(., "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "that username is taken")]')
+                    )
                 );
 
-                $username .= "ahr";
+                echo "Username sudah diambil, mencoba variasi lain...\n";
+                $username .= rand(10, 99);
                 $attempt++;
-            } catch (Exception $e) {
+            } catch (TimeoutException $e) {
+                echo "Username tersedia: $username\n";
                 break;
             }
         }
@@ -260,8 +342,6 @@ class xixixixi
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
         );
-
-        sleep(rand(1, 3));
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
@@ -293,8 +373,6 @@ class xixixixi
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
         );
 
-        sleep(rand(1, 3));
-
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
         $this->driver->wait(10)->until(
@@ -304,12 +382,12 @@ class xixixixi
             try {
                 $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
                 if ($errorElement->isDisplayed()) {
-                    echo "Akun gagal dibuat. Restarting...\n";
+                    //echo "Akun gagal dibuat. Restarting...\n";
                     $this->restartProgram();
                     return;
                 }
             } catch (NoSuchElementException $e) {
-                echo "\nAkun gagal dibuat. Restarting...\n";
+                //echo "\nAkun gagal dibuat. Restarting...\n";
             }
 
             $this->driver->wait(10)->until(
@@ -351,9 +429,9 @@ class xixixixi
 
             sleep(5);
 
-            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times')]"));
+            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number cannot be used for verification.')]"));
             if (count($errorElements) > 0) {
-                echo "\nNomor sudah terlalu sering digunakan, membatalkan order...\n";
+                echo "\nNomor sudah terlalu sering digunakan atau tidak bisa digunakan untuk verifikasi, membatalkan order...\n";
 
                 $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
 
@@ -394,11 +472,29 @@ class xixixixi
 
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-            echo "\nVerifikasi berhasil!";
+            echo "━━━━━━━━━━━━━━━━━━━━━━━\n";
+            echo "🎉 SUKSES: Verifikasi berhasil!\n";
+            echo "━━━━━━━━━━━━━━━━━━━━━━━\n";
         } catch (Exception $e) {
             echo "\nTerjadi error: " . $e->getMessage();
             $this->restartProgram();
         }
+
+        $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
+        )->click();
+
+        $nextButton = $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//span[text()='Next']/ancestor::button"))
+        );
+
+        (new WebDriverActions($this->driver))->moveToElement($nextButton)->click()->perform();
+
+        $agreeButton = $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//span[text()='I agree']/ancestor::button"))
+        );
+
+        (new WebDriverActions($this->driver))->moveToElement($agreeButton)->click()->perform();
 
         $data = [
             $firstName,
@@ -410,7 +506,11 @@ class xixixixi
             $password
         ];
 
-        $this->saveToCsv($data);
+        $this->saveToTxt($data);
+
+        echo "━━━━━━━━━━━━━━━━━━━━━━━\n";
+        echo "🎉 SUKSES: Akun berhasil dibuat!\n";
+        echo "━━━━━━━━━━━━━━━━━━━━━━━\n";
 
         sleep(60);
 
@@ -454,9 +554,9 @@ class xixixixi
         }
     }
 
-    private function saveToCsv($data)
+    private function saveToTxt($data)
     {
-        $filePath = 'accounts.csv';
+        $filePath = 'accounts.txt';
 
         date_default_timezone_set('Asia/Jakarta');
 
@@ -465,15 +565,28 @@ class xixixixi
         $file = fopen($filePath, 'a+');
 
         if ($isFileEmpty) {
-            fwrite($file, "\xEF\xBB\xBF");
-            fputcsv($file, ['Timestamp', 'First Name', 'Last Name', 'Day', 'Month', 'Year', 'Username', 'Password']);
+            fwrite($file, "Timestamp | First Name | Last Name | Day | Month | Year | Username | Password\n");
+            fwrite($file, str_repeat('-', 100) . "\n");
         }
 
         $timestamp = date('Y-m-d H:i:s');
-        $paddedData = array_map(fn($item) => str_pad($item, 20, ' ', STR_PAD_RIGHT), $data);
 
-        fputcsv($file, array_merge([$timestamp], $paddedData));
+        $data[6] = str_pad($data[6], 40, ' ', STR_PAD_RIGHT);
+        $data[7] = str_pad($data[7], 40, ' ', STR_PAD_RIGHT);
 
+        $line = sprintf(
+            "%s | %s | %s | %s | %s | %s | %s | %s\n",
+            $timestamp,
+            $data[0],
+            $data[1],
+            $data[2],
+            $data[3],
+            $data[4],
+            trim($data[6]),
+            trim($data[7])
+        );
+
+        fwrite($file, $line);
         fclose($file);
     }
 
