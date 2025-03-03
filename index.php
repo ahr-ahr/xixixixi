@@ -321,7 +321,7 @@ class xixixixi
             try {
                 $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
-                        WebDriverBy::xpath('//div[contains(translate(., "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "that username is taken")]')
+                        WebDriverBy::xpath('//div[contains(text(), "that username is taken")]')
                     )
                 );
 
@@ -329,7 +329,7 @@ class xixixixi
                 $username .= rand(10, 99);
                 $attempt++;
             } catch (TimeoutException $e) {
-                echo "Username tersedia: $username\n";
+                //echo "Username tersedia: $username\n";
                 break;
             }
         }
@@ -429,7 +429,7 @@ class xixixixi
 
             sleep(5);
 
-            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number cannot be used for verification.')]"));
+            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.')]"));
             if (count($errorElements) > 0) {
                 echo "\nNomor sudah terlalu sering digunakan atau tidak bisa digunakan untuk verifikasi, membatalkan order...\n";
 
@@ -484,17 +484,13 @@ class xixixixi
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
         )->click();
 
-        $nextButton = $this->driver->wait(15)->until(
-            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//span[text()='Next']/ancestor::button"))
-        );
+        $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//div[@jscontroller='f8Gu1e']//button[.//span[text()='Next']]"))
+        )->click();
 
-        (new WebDriverActions($this->driver))->moveToElement($nextButton)->click()->perform();
-
-        $agreeButton = $this->driver->wait(15)->until(
-            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//span[text()='I agree']/ancestor::button"))
-        );
-
-        (new WebDriverActions($this->driver))->moveToElement($agreeButton)->click()->perform();
+        $this->driver->wait(15)->until(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath("//div[@jscontroller='f8Gu1e']//button[.//span[text()='I agree']]"))
+        )->click();
 
         $data = [
             $firstName,
@@ -571,8 +567,9 @@ class xixixixi
 
         $timestamp = date('Y-m-d H:i:s');
 
-        $data[6] = str_pad($data[6], 40, ' ', STR_PAD_RIGHT);
-        $data[7] = str_pad($data[7], 40, ' ', STR_PAD_RIGHT);
+        // Perbaikan indeks agar tidak error
+        $data[5] = str_pad($data[5], 40, ' ', STR_PAD_RIGHT); // Username
+        $data[6] = str_pad($data[6], 40, ' ', STR_PAD_RIGHT); // Password
 
         $line = sprintf(
             "%s | %s | %s | %s | %s | %s | %s | %s\n",
@@ -582,14 +579,13 @@ class xixixixi
             $data[2],
             $data[3],
             $data[4],
-            trim($data[6]),
-            trim($data[7])
+            trim($data[5]),
+            trim($data[6])
         );
 
         fwrite($file, $line);
         fclose($file);
     }
-
 
 
     private function restartProgram()
