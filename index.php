@@ -91,9 +91,22 @@ class xixixixi
         $capabilities->setCapability(ChromeOptions::CAPABILITY, $options);
         $this->driver = RemoteWebDriver::create('http://localhost:9515', $capabilities);
 
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        echo "✅ Chrome Selenium sudah berjalan dengan ekstensi & proxy: $proxyServer\n";
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        echo "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m\n";
+        echo "\e[1;33m🚀 GOOGLE ACCOUNT AUTO-REGISTER BOT\e[0m\n";
+        echo "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m\n";
+        echo "\e[1;32m✅ Status: \e[1;37mBerjalan\e[0m\n";
+        echo "\e[1;32m🌐 Proxy Server: \e[1;34m$proxyServer\e[0m\n";
+        echo "\e[1;32m🔌 Ekstensi Aktif: \e[1;35mYa\e[0m\n";
+        echo "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m\n";
+        echo "\e[1;33m📜 Deskripsi:\e[0m\n";
+        echo "\e[1;37m  Program ini merupakan bot otomatis untuk mendaftarkan akun Google.\n";
+        echo "  Menggunakan Selenium Chrome Driver dengan konfigurasi proxy dan ekstensi.\e[0m\n";
+        echo "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m\n";
+        echo "\e[1;33m👨‍💻 Author: \e[1;37mAhmad Haikal Rizal\e[0m\n";
+        echo "\e[1;32m📌 GitHub: \e[1;34mgithub.com/ahr-ahr\e[0m\n";
+        echo "\e[1;32m📷 Instagram: \e[1;35m@lelekuningcoy\e[0m\n";
+        echo "\e[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m\n";
+
 
         sleep(rand(2, 5));
     }
