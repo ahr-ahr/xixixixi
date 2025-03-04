@@ -211,25 +211,27 @@ class xixixixi
         $this->driver->close();
         $this->driver->switchTo()->window($windows[0]);
 
-        $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('firstName'))
-        );
-
         $firstName = preg_replace('/[^A-Za-z]/', '', $this->faker->firstName);
         $lastName = preg_replace('/[^A-Za-z]/', '', $this->faker->lastName);
 
         $actions = new WebDriverActions($this->driver);
+
+        $this->driver->wait(5)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::name('firstName'))
+        );
+        $this->driver->wait(5)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::name('lastName'))
+        );
+
         $firstNameField = $this->driver->findElement(WebDriverBy::name('firstName'));
         $lastNameField = $this->driver->findElement(WebDriverBy::name('lastName'));
 
-        $actions->moveToElement($firstNameField)->perform();
-        sleep(rand(1, 2));
+        $firstNameField->click();
         $this->slowType($firstNameField, $firstName);
+        sleep(rand(1, 2));
 
-        $actions->moveToElement($lastNameField)->perform();
-        sleep(rand(1, 3));
+        $lastNameField->click();
         $this->slowType($lastNameField, $lastName);
-
         sleep(rand(1, 3));
 
         $nextButton = $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'));
@@ -305,8 +307,6 @@ class xixixixi
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
         $username = $firstName . $lastName . $year;
-        $maxAttempts = 2;
-        $attempt = 0;
 
         try {
             $this->driver->wait(10)->until(
@@ -327,13 +327,14 @@ class xixixixi
         }
 
         $attempt = 0;
-        $maxAttempts = 5;
+        $maxAttempts = 3;
 
         while ($attempt < $maxAttempts) {
             sleep(1);
 
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
             $usernameField->clear();
+            $username = substr($username, 0, 10) . rand(10, 99);
             $this->slowType($usernameField, $username);
 
             usleep(rand(500000, 1500000));
@@ -341,13 +342,11 @@ class xixixixi
             try {
                 $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
-                        WebDriverBy::xpath('//div[@class="Ekjuhf Jj6Lae"]')
+                        WebDriverBy::xpath('//div[contains(text(), "That username is taken")]')
                     )
                 );
 
                 echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
-
-                $username .= rand(10, 99);
                 $attempt++;
             } catch (TimeoutException $e) {
                 echo "✅ Username tersedia: $username\n";
@@ -358,6 +357,7 @@ class xixixixi
         if ($attempt >= $maxAttempts) {
             throw new Exception("Gagal mendapatkan username yang tersedia setelah $maxAttempts percobaan.");
         }
+
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
@@ -560,91 +560,167 @@ class xixixixi
         //     $this->restartProgram();
         // }
 
+        // try {
+        //     $qrVerificationElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Continue completing the verification process on your phone. If you're having trouble, scan the QR code again with your phone. After scanning, follow the steps on your phone in order to complete the verification.')]"));
+        //     if ($qrVerificationElement->isDisplayed()) {
+        //         echo "⚠️  Verifikasi harus dilakukan melalui QR Code. Restart program...\n";
+        //         $this->restartProgram();
+        //         break;
+        //     }
+        // } catch (NoSuchElementException $e) {
+        // }
+
         try {
-            while (true) { // Looping untuk mendapatkan nomor baru jika gagal
+            while (true) {
                 try {
                     $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
                     if ($errorElement->isDisplayed()) {
-                        continue; // Ambil nomor baru tanpa restart program
+                        continue;
                     }
                 } catch (NoSuchElementException $e) {
                 }
-
+        
                 $this->driver->wait(10)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
                 );
-
-                $useSmsActivate = false; // Ganti true jika ingin menggunakan SMS-Activate
+        
+                $useSmsActivate = false; // Set to true to use SMS-Activate
+                $use5Sim = false; // Set to true to use 5Sim
+                $useSmsPool = false; // Set to true to use SMSPool
+                $useSmsHub = true; // Set to true to use SMSHub
+        
                 $phoneNumber = '';
                 $orderId = '';
-
+        
+                // SMS-Activate logic
                 if ($useSmsActivate) {
-                    // SMS-Activate API
                     $apiKey = '83eA2A1142980d5426fb50bb782b62f1';
-                    $country = '6'; // Indonesia
-                    $service = 'go'; // Google
-
+                    $country = '6'; // Country code for Indonesia (or other country as needed)
+                    $service = 'go'; // Service code for Google
+        
                     $apiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getNumber&service=$service&country=$country";
                     $response = file_get_contents($apiUrl);
-
+        
                     if (strpos($response, 'ACCESS_NUMBER') === false) {
                         echo "Gagal mendapatkan nomor dari SMS-Activate. Mencoba lagi...\n";
-                        continue; // Coba dapatkan nomor baru
+                        continue;
                     }
-
+        
                     $parts = explode(':', $response);
-                    $orderId = $parts[1]; // ID order
-                    $phoneNumber = $parts[2]; // Nomor HP
-                } else {
-                    // 5Sim API
+                    $orderId = $parts[1]; // Order ID
+                    $phoneNumber = $parts[2]; // Phone number
+                }
+        
+                // 5Sim logic
+                if ($use5Sim && $phoneNumber == '') {
                     $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
                     $country = 'indonesia';
                     $operator = 'any';
                     $product = 'google';
-
+        
                     $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
                     $headers = [
                         "Authorization: Bearer $token",
                         "Accept: application/json"
                     ];
-
+        
                     $ch = curl_init();
                     curl_setopt($ch, CURLOPT_URL, $apiUrl);
                     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     $response = curl_exec($ch);
                     curl_close($ch);
-
+        
                     $data = json_decode($response, true);
                     if (!isset($data['phone'])) {
                         echo "Gagal mendapatkan nomor dari 5Sim. Mencoba lagi...\n";
                         continue; // Coba dapatkan nomor baru
                     }
-
+        
                     $phoneNumber = $data['phone'];
                     $orderId = $data['id'];
                 }
-
-                // Masukkan nomor ke input
+        
+                // SMSPool logic
+                if ($useSmsPool && $phoneNumber == '') {
+                    $smsPoolToken = 'YOUR_SMSPOOL_BEARER_TOKEN';
+                    $apiUrl = "https://api.smspool.net/purchase/sms";
+                    $headers = [
+                        "Authorization: Bearer $smsPoolToken",
+                        "Content-Type: application/x-www-form-urlencoded"
+                    ];
+        
+                    $postFields = [
+                        'country' => '1', // Use country code (1 for USA, adjust accordingly)
+                        'service' => '1', // Service ID for Google
+                        'max_price' => '0.01',
+                        'pricing_option' => '0',
+                        'quantity' => '2',
+                        'areacode' => '[]', // Optional: provide area codes
+                        'exclude' => '0',
+                        'create_token' => '0',
+                    ];
+        
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postFields));
+                    $response = curl_exec($ch);
+                    curl_close($ch);
+        
+                    $smsPoolResponse = json_decode($response, true);
+                    if ($smsPoolResponse['success'] == 1) {
+                        $phoneNumber = $smsPoolResponse['data'][0]['phone']; // Example: using the first phone number from response
+                        $orderId = $smsPoolResponse['data'][0]['orderid']; // Order ID
+                    } else {
+                        echo "Gagal mendapatkan nomor dari SMSPool. Mencoba lagi...\n";
+                        continue;
+                    }
+                }
+        
+                // SMSHub logic
+                if ($useSmsHub && $phoneNumber == '') {
+                    $apiKey = 'YOUR_SMSHUB_API_KEY';
+                    $country = 'RU'; // Example country code for Russia, adjust as needed
+                    $service = 'google'; // Service code for Googles
+                    $operator = 'any'; // You can change this based on the operator, if necessary
+        
+                    $apiUrl = "https://smshub.org/stubs/handler_api.php?api_key=$apiKey&action=getNumber&service=$service&country=$country&operator=$operator";
+                    $response = file_get_contents($apiUrl);
+        
+                    if (strpos($response, 'ACCESS_NUMBER') === false) {
+                        echo "Failed to get number from SMSHub. Trying again...\n";
+                        continue;
+                    }
+        
+                    $parts = explode(':', $response);
+                    $orderId = $parts[1]; // Order ID
+                    $phoneNumber = $parts[2]; // Phone number
+                }
+        
+                // Enter phone number in input
                 $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
                 $phoneNumberInput->clear();
                 $phoneNumberInput->click();
                 $phoneNumberInput->sendKeys($phoneNumber);
-
+        
                 $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
                 sleep(5);
-
-                // Cek error penggunaan nomor
+        
+                // Check for number errors
                 $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.')]"));
                 if (count($errorElements) > 0) {
                     echo "⚠️  Nomor tidak valid. Mencoba nomor baru...\n";
-
+        
+                    // Cancel number in SMS-Activate
                     if ($useSmsActivate) {
-                        // Batalkan nomor di SMS-Activate
                         $cancelApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=8&id=$orderId";
                         file_get_contents($cancelApiUrl);
-                    } else {
-                        // Ban nomor di 5Sim
+                    }
+                    // Ban number in 5Sim
+                    elseif ($use5Sim) {
                         $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
                         $ch = curl_init();
                         curl_setopt($ch, CURLOPT_URL, $banApiUrl);
@@ -654,15 +730,25 @@ class xixixixi
                         curl_exec($ch);
                         curl_close($ch);
                     }
-
-                    continue; // Coba dapatkan nomor baru tanpa restart
+                    // Ban number in SMSPool
+                    elseif ($useSmsPool) {
+                        $banApiUrl = "https://api.smspool.net/ban/$orderId";
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+                        curl_exec($ch);
+                        curl_close($ch);
+                    }
+                    continue; // Try to get a new number without restart
                 }
-
+        
                 $this->driver->wait(15)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
                 );
-
-                // Cek OTP
+        
+                // Check OTP
                 $otp = null;
                 if ($useSmsActivate) {
                     $otpApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
@@ -673,7 +759,7 @@ class xixixixi
                             $otp = explode(':', $response)[1];
                         }
                     } while (!$otp);
-                } else {
+                } elseif ($use5Sim) {
                     $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
                     do {
                         sleep(5);
@@ -683,37 +769,55 @@ class xixixixi
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                         $otpResponse = curl_exec($ch);
                         curl_close($ch);
-
+        
                         $otpData = json_decode($otpResponse, true);
                         $otp = $otpData['sms'][0]['code'] ?? null;
                     } while (!$otp);
+                } elseif ($useSmsPool) {
+                    $otpApiUrl = "https://api.smspool.net/otp/$orderId";
+                    do {
+                        sleep(5);
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        $otpResponse = curl_exec($ch);
+                        curl_close($ch);
+        
+                        $otpData = json_decode($otpResponse, true);
+                        $otp = $otpData['code'] ?? null;
+                    } while (!$otp);
+                } elseif ($useSmsHub) {
+                    $otpApiUrl = "https://smshub.org/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
+                    do {
+                        sleep(5);
+                        $response = file_get_contents($otpApiUrl);
+                        if (strpos($response, 'STATUS_OK') !== false) {
+                            $otp = explode(':', $response)[1];
+                        }
+                    } while (!$otp);
                 }
-
+        
                 $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+                $otpInput->clear();
                 $otpInput->sendKeys($otp);
-
-                $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
-
-                if ($useSmsActivate) {
-                    $finishApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=6&id=$orderId";
-                    file_get_contents($finishApiUrl);
-                }
-
-                echo "🎉 SUKSES: Verifikasi berhasil!\n";
-                break; // Keluar dari loop jika sukses
+                $this->driver->findElement(WebDriverBy::cssSelector('button[type="submit"]'))->click();
+        
+                echo "✅ Account activated successfully!\n";
+                break;
             }
         } catch (Exception $e) {
-            echo "\nTerjadi error: " . $e->getMessage();
+            echo "Error: " . $e->getMessage();
         }
-
+        
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
         )->click();
-        sleep(3);
+        sleep(2);
 
         $nextButton = $this->driver->executeScript("document.querySelector('button span.VfPpkd-vQzf8d').click();");
-        sleep(3);
+        sleep(2);
 
         $this->driver->executeScript("
     document.querySelectorAll('button span.VfPpkd-vQzf8d').forEach(el => {
@@ -739,7 +843,9 @@ class xixixixi
         echo "🎉 SUKSES: Akun berhasil dibuat!\n";
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
-        sleep(60);
+        sleep(10);
+
+        $this->restartProgram();
 
         // // Coba selesaikan CAPTCHA dengan ekstensi Buster
         // if ($this->solveCaptchaWithBuster()) {
