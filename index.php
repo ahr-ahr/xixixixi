@@ -314,20 +314,18 @@ class xixixixi
         }
 
         $attempt = 0;
-        $maxAttempts = 5; // Maksimal percobaan
+        $maxAttempts = 5;
 
         while ($attempt < $maxAttempts) {
             sleep(1);
 
-            // Temukan field username dan bersihkan sebelum mengetik ulang
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
             $usernameField->clear();
             $this->slowType($usernameField, $username);
 
-            usleep(rand(500000, 1500000)); // Simulasi input manusia
+            usleep(rand(500000, 1500000));
 
             try {
-                // Tunggu hingga pesan error muncul (jika username sudah diambil)
                 $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
                         WebDriverBy::xpath('//div[@class="Ekjuhf Jj6Lae"]')
@@ -335,8 +333,7 @@ class xixixixi
                 );
 
                 echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
-                
-                // Tambahkan angka acak untuk variasi username
+
                 $username .= rand(10, 99);
                 $attempt++;
             } catch (TimeoutException $e) {
@@ -712,7 +709,6 @@ class xixixixi
         }
     });
 ");
-        sleep(3);
 
         $data = [
             $firstName,
@@ -778,37 +774,31 @@ class xixixixi
 
         date_default_timezone_set('Asia/Jakarta');
 
-        $isFileEmpty = !file_exists($filePath) || filesize($filePath) === 0;
-
-        $file = fopen($filePath, 'a+');
-
-        if ($isFileEmpty) {
-            fwrite($file, "Timestamp | First Name | Last Name | Day | Month | Year | Username | Password\n");
-            fwrite($file, str_repeat('-', 100) . "\n");
+        if (!file_exists($filePath)) {
+            $header = "Timestamp | First Name | Last Name | Day | Month | Year | Username | Password\n";
+            $header .= str_repeat('-', 100) . "\n";
+            file_put_contents($filePath, $header, LOCK_EX);
         }
 
         $timestamp = date('Y-m-d H:i:s');
 
-        // Perbaikan indeks agar tidak error
-        $data[5] = str_pad($data[5], 40, ' ', STR_PAD_RIGHT); // Username
-        $data[6] = str_pad($data[6], 40, ' ', STR_PAD_RIGHT); // Password
+        $username = isset($data[5]) ? str_pad($data[5], 40, ' ', STR_PAD_RIGHT) : 'N/A';
+        $password = isset($data[6]) ? str_pad($data[6], 40, ' ', STR_PAD_RIGHT) : 'N/A';
 
         $line = sprintf(
             "%s | %s | %s | %s | %s | %s | %s | %s\n",
             $timestamp,
-            $data[0],
-            $data[1],
-            $data[2],
-            $data[3],
-            $data[4],
-            trim($data[5]),
-            trim($data[6])
+            $data[0] ?? 'N/A',
+            $data[1] ?? 'N/A',
+            $data[2] ?? 'N/A',
+            $data[3] ?? 'N/A',
+            $data[4] ?? 'N/A',
+            trim($username),
+            trim($password)
         );
 
-        fwrite($file, $line);
-        fclose($file);
+        file_put_contents($filePath, $line, FILE_APPEND | LOCK_EX);
     }
-
 
     private function restartProgram()
     {
