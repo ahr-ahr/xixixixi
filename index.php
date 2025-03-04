@@ -81,10 +81,10 @@ class xixixixi
             "--no-sandbox",
             "--disable-gpu",
             "--disable-dev-shm-usage",
-            '--disable-blink-features=AutomationControlled', // Hilangkan flag otomatisasi
-            '--start-maximized', // Buka browser dalam mode maksimal
-            '--disable-infobars', // Hilangkan notifikasi otomatisasi
-            '--disable-dev-shm-usage' // Optimasi resource
+            '--disable-blink-features=AutomationControlled',
+            '--start-maximized',
+            '--disable-infobars',
+            '--disable-dev-shm-usage'
         ]);
 
         $capabilities = DesiredCapabilities::chrome();
@@ -200,8 +200,8 @@ class xixixixi
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('firstName'))
         );
 
-        $firstName = $this->faker->firstName;
-        $lastName = $this->faker->lastName;
+        $firstName = preg_replace('/[^A-Za-z]/', '', $this->faker->firstName);
+        $lastName = preg_replace('/[^A-Za-z]/', '', $this->faker->lastName);
 
         $actions = new WebDriverActions($this->driver);
         $firstNameField = $this->driver->findElement(WebDriverBy::name('firstName'));
@@ -321,7 +321,7 @@ class xixixixi
             try {
                 $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
-                        WebDriverBy::xpath('//div[contains(text(), "that username is taken")]')
+                        WebDriverBy::xpath('//div[contains(text(), "that username is taken.")]')
                     )
                 );
 
