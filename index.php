@@ -300,7 +300,8 @@ class xixixixi
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath('//div[@jsname="CeL6Qc" and contains(text(), "Create your own Gmail address")]'))
             );
 
-            $this->driver->findElement(WebDriverBy::xpath('//div[@jsname="CeL6Qc" and contains(text(), "Create your own Gmail address")]'))->click();
+            $this->driver->executeScript("document.querySelector('.zJKIV.lezCeb.kAVONc[jsname=\"ornU0b\"][data-value=\"custom\"]').click();");
+            sleep(3);
 
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
@@ -312,26 +313,34 @@ class xixixixi
             );
         }
 
+        $attempt = 0;
+        $maxAttempts = 5; // Maksimal percobaan
+
         while ($attempt < $maxAttempts) {
             sleep(1);
+
+            // Temukan field username dan bersihkan sebelum mengetik ulang
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
             $usernameField->clear();
             $this->slowType($usernameField, $username);
 
-            usleep(rand(500000, 1500000));
+            usleep(rand(500000, 1500000)); // Simulasi input manusia
 
             try {
-                $this->driver->wait(10)->until(
+                // Tunggu hingga pesan error muncul (jika username sudah diambil)
+                $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
-                        WebDriverBy::xpath('//div[contains(text(), "that username is taken.")]')
+                        WebDriverBy::xpath('//div[@class="Ekjuhf Jj6Lae"]')
                     )
                 );
 
-                echo "Username sudah diambil, mencoba variasi lain...\n";
+                echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
+                
+                // Tambahkan angka acak untuk variasi username
                 $username .= rand(10, 99);
                 $attempt++;
             } catch (TimeoutException $e) {
-                //echo "Username tersedia: $username\n";
+                echo "✅ Username tersedia: $username\n";
                 break;
             }
         }
@@ -339,7 +348,6 @@ class xixixixi
         if ($attempt >= $maxAttempts) {
             throw new Exception("Gagal mendapatkan username yang tersedia setelah $maxAttempts percobaan.");
         }
-
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
@@ -380,165 +388,312 @@ class xixixixi
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
         );
+
+        // try {
+        //     try {
+        //         $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
+        //         if ($errorElement->isDisplayed()) {
+        //             $this->restartProgram();
+        //             return;
+        //         }
+        //     } catch (NoSuchElementException $e) {
+        //     }
+
+        //     $this->driver->wait(10)->until(
+        //         WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
+        //     );
+
+        //     $useSmsActivate = false; // Ganti true jika ingin menggunakan SMS-Activate
+        //     $phoneNumber = '';
+        //     $orderId = '';
+
+        //     if ($useSmsActivate) {
+        //         // SMS-Activate API
+        //         $apiKey = '83eA2A1142980d5426fb50bb782b62f1';
+        //         $country = '6'; // Indonesia
+        //         $service = 'go'; // Google
+
+        //         $apiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getNumber&service=$service&country=$country";
+        //         $response = file_get_contents($apiUrl);
+
+        //         if (strpos($response, 'ACCESS_NUMBER') === false) {
+        //             die("Gagal mendapatkan nomor dari SMS-Activate");
+        //         }
+
+        //         $parts = explode(':', $response);
+        //         $orderId = $parts[1]; // ID order
+        //         $phoneNumber = $parts[2]; // Nomor HP
+        //     } else {
+        //         // 5Sim API
+        //         $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
+        //         $country = 'indonesia';
+        //         $operator = 'any';
+        //         $product = 'google';
+
+        //         $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
+        //         $headers = [
+        //             "Authorization: Bearer $token",
+        //             "Accept: application/json"
+        //         ];
+
+        //         $ch = curl_init();
+        //         curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        //         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        //         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        //         $response = curl_exec($ch);
+        //         curl_close($ch);
+
+        //         $data = json_decode($response, true);
+        //         if (!isset($data['phone'])) {
+        //             die("Gagal mendapatkan nomor dari API 5Sim");
+        //         }
+
+        //         $phoneNumber = $data['phone'];
+        //         $orderId = $data['id'];
+        //     }
+
+        //     $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
+        //     $phoneNumberInput->click();
+        //     $phoneNumberInput->sendKeys($phoneNumber);
+
+        //     $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+        //     sleep(5);
+
+        //     // Cek error
+        //     $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.')]"));
+        //     if (count($errorElements) > 0) {
+        //         echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        //         echo "⚠️  NOMOR TIDAK VALID ⚠️\n";
+        //         echo "🚫 Nomor sudah terlalu sering digunakan atau tidak dapat digunakan untuk verifikasi.\n";
+        //         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+
+
+        //         if ($useSmsActivate) {
+        //             // Batalkan nomor di SMS-Activate
+        //             $cancelApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=8&id=$orderId";
+        //             file_get_contents($cancelApiUrl);
+        //             echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        //             echo "🚨 ORDER DICANCEL 🚨\n";
+        //             echo "✅ Order dengan ID: $orderId berhasil dibatalkan di SMS-Activate.\n";
+        //             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+
+        //         } else {
+        //             // Ban nomor di 5Sim
+        //             $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
+        //             $ch = curl_init();
+        //             curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+        //             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        //             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        //             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+        //             curl_exec($ch);
+        //             curl_close($ch);
+        //             echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        //             echo "🚨 ORDER DIBANNED 🚨\n";
+        //             echo "✅ Order dengan ID: $orderId berhasil dibanned di 5Sim.\n";
+        //             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        //         }
+
+        //         $this->restartProgram();
+        //         return;
+        //     }
+
+        //     $this->driver->wait(15)->until(
+        //         WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
+        //     );
+
+        //     // Cek OTP
+        //     $otp = null;
+        //     if ($useSmsActivate) {
+        //         // Cek OTP dari SMS-Activate
+        //         $otpApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
+        //         do {
+        //             sleep(5);
+        //             $response = file_get_contents($otpApiUrl);
+        //             if (strpos($response, 'STATUS_OK') !== false) {
+        //                 $otp = explode(':', $response)[1];
+        //             }
+        //         } while (!$otp);
+        //     } else {
+        //         // Cek OTP dari 5Sim
+        //         $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
+        //         do {
+        //             sleep(5);
+        //             $ch = curl_init();
+        //             curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+        //             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        //             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        //             $otpResponse = curl_exec($ch);
+        //             curl_close($ch);
+
+        //             $otpData = json_decode($otpResponse, true);
+        //             $otp = $otpData['sms'][0]['code'] ?? null;
+        //         } while (!$otp);
+        //     }
+
+        //     $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+        //     $otpInput->sendKeys($otp);
+
+        //     $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+        //     if ($useSmsActivate) {
+        //         // Konfirmasi OTP di SMS-Activate
+        //         $finishApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=6&id=$orderId";
+        //         file_get_contents($finishApiUrl);
+        //     }
+
+        //     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        //     echo "🎉 SUKSES: Verifikasi berhasil!\n";
+        //     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        // } catch (Exception $e) {
+        //     echo "\nTerjadi error: " . $e->getMessage();
+        //     $this->restartProgram();
+        // }
+
         try {
-            try {
-                $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
-                if ($errorElement->isDisplayed()) {
-                    $this->restartProgram();
-                    return;
-                }
-            } catch (NoSuchElementException $e) {
-            }
-
-            $this->driver->wait(10)->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
-            );
-
-            $useSmsActivate = false; // Ganti true jika ingin menggunakan SMS-Activate
-            $phoneNumber = '';
-            $orderId = '';
-
-            if ($useSmsActivate) {
-                // SMS-Activate API
-                $apiKey = '83eA2A1142980d5426fb50bb782b62f1';
-                $country = '6'; // Indonesia
-                $service = 'go'; // Google
-
-                $apiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getNumber&service=$service&country=$country";
-                $response = file_get_contents($apiUrl);
-
-                if (strpos($response, 'ACCESS_NUMBER') === false) {
-                    die("Gagal mendapatkan nomor dari SMS-Activate");
+            while (true) { // Looping untuk mendapatkan nomor baru jika gagal
+                try {
+                    $errorElement = $this->driver->findElement(WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account')]"));
+                    if ($errorElement->isDisplayed()) {
+                        continue; // Ambil nomor baru tanpa restart program
+                    }
+                } catch (NoSuchElementException $e) {
                 }
 
-                $parts = explode(':', $response);
-                $orderId = $parts[1]; // ID order
-                $phoneNumber = $parts[2]; // Nomor HP
-            } else {
-                // 5Sim API
-                $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-                $country = 'indonesia';
-                $operator = 'any';
-                $product = 'google';
+                $this->driver->wait(10)->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
+                );
 
-                $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
-                $headers = [
-                    "Authorization: Bearer $token",
-                    "Accept: application/json"
-                ];
-
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $apiUrl);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                $response = curl_exec($ch);
-                curl_close($ch);
-
-                $data = json_decode($response, true);
-                if (!isset($data['phone'])) {
-                    die("Gagal mendapatkan nomor dari API 5Sim");
-                }
-
-                $phoneNumber = $data['phone'];
-                $orderId = $data['id'];
-            }
-
-            $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
-            $phoneNumberInput->click();
-            $phoneNumberInput->sendKeys($phoneNumber);
-
-            $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
-
-            sleep(5);
-
-            // Cek error
-            $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.')]"));
-            if (count($errorElements) > 0) {
-                echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                echo "⚠️  NOMOR TIDAK VALID ⚠️\n";
-                echo "🚫 Nomor sudah terlalu sering digunakan atau tidak dapat digunakan untuk verifikasi.\n";
-                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-
+                $useSmsActivate = false; // Ganti true jika ingin menggunakan SMS-Activate
+                $phoneNumber = '';
+                $orderId = '';
 
                 if ($useSmsActivate) {
-                    // Batalkan nomor di SMS-Activate
-                    $cancelApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=8&id=$orderId";
-                    file_get_contents($cancelApiUrl);
-                    echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                    echo "🚨 ORDER DICANCEL 🚨\n";
-                    echo "✅ Order dengan ID: $orderId berhasil dibatalkan di SMS-Activate.\n";
-                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                    // SMS-Activate API
+                    $apiKey = '83eA2A1142980d5426fb50bb782b62f1';
+                    $country = '6'; // Indonesia
+                    $service = 'go'; // Google
 
+                    $apiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getNumber&service=$service&country=$country";
+                    $response = file_get_contents($apiUrl);
+
+                    if (strpos($response, 'ACCESS_NUMBER') === false) {
+                        echo "Gagal mendapatkan nomor dari SMS-Activate. Mencoba lagi...\n";
+                        continue; // Coba dapatkan nomor baru
+                    }
+
+                    $parts = explode(':', $response);
+                    $orderId = $parts[1]; // ID order
+                    $phoneNumber = $parts[2]; // Nomor HP
                 } else {
-                    // Ban nomor di 5Sim
-                    $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
+                    // 5Sim API
+                    $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
+                    $country = 'indonesia';
+                    $operator = 'any';
+                    $product = 'google';
+
+                    $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
+                    $headers = [
+                        "Authorization: Bearer $token",
+                        "Accept: application/json"
+                    ];
+
                     $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+                    curl_setopt($ch, CURLOPT_URL, $apiUrl);
                     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-                    curl_exec($ch);
+                    $response = curl_exec($ch);
                     curl_close($ch);
-                    echo "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                    echo "🚨 ORDER DIBANNED 🚨\n";
-                    echo "✅ Order dengan ID: $orderId berhasil dibanned di 5Sim.\n";
-                    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+
+                    $data = json_decode($response, true);
+                    if (!isset($data['phone'])) {
+                        echo "Gagal mendapatkan nomor dari 5Sim. Mencoba lagi...\n";
+                        continue; // Coba dapatkan nomor baru
+                    }
+
+                    $phoneNumber = $data['phone'];
+                    $orderId = $data['id'];
                 }
 
-                $this->restartProgram();
-                return;
-            }
+                // Masukkan nomor ke input
+                $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
+                $phoneNumberInput->clear();
+                $phoneNumberInput->click();
+                $phoneNumberInput->sendKeys($phoneNumber);
 
-            $this->driver->wait(15)->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
-            );
+                $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+                sleep(5);
 
-            // Cek OTP
-            $otp = null;
-            if ($useSmsActivate) {
-                // Cek OTP dari SMS-Activate
-                $otpApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
-                do {
-                    sleep(5);
-                    $response = file_get_contents($otpApiUrl);
-                    if (strpos($response, 'STATUS_OK') !== false) {
-                        $otp = explode(':', $response)[1];
+                // Cek error penggunaan nomor
+                $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.')]"));
+                if (count($errorElements) > 0) {
+                    echo "⚠️  Nomor tidak valid. Mencoba nomor baru...\n";
+
+                    if ($useSmsActivate) {
+                        // Batalkan nomor di SMS-Activate
+                        $cancelApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=8&id=$orderId";
+                        file_get_contents($cancelApiUrl);
+                    } else {
+                        // Ban nomor di 5Sim
+                        $banApiUrl = "https://5sim.net/v1/user/ban/$orderId";
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+                        curl_exec($ch);
+                        curl_close($ch);
                     }
-                } while (!$otp);
-            } else {
-                // Cek OTP dari 5Sim
-                $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
-                do {
-                    sleep(5);
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    $otpResponse = curl_exec($ch);
-                    curl_close($ch);
 
-                    $otpData = json_decode($otpResponse, true);
-                    $otp = $otpData['sms'][0]['code'] ?? null;
-                } while (!$otp);
+                    continue; // Coba dapatkan nomor baru tanpa restart
+                }
+
+                $this->driver->wait(15)->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('code'))
+                );
+
+                // Cek OTP
+                $otp = null;
+                if ($useSmsActivate) {
+                    $otpApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
+                    do {
+                        sleep(5);
+                        $response = file_get_contents($otpApiUrl);
+                        if (strpos($response, 'STATUS_OK') !== false) {
+                            $otp = explode(':', $response)[1];
+                        }
+                    } while (!$otp);
+                } else {
+                    $otpApiUrl = "https://5sim.net/v1/user/check/$orderId";
+                    do {
+                        sleep(5);
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        $otpResponse = curl_exec($ch);
+                        curl_close($ch);
+
+                        $otpData = json_decode($otpResponse, true);
+                        $otp = $otpData['sms'][0]['code'] ?? null;
+                    } while (!$otp);
+                }
+
+                $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
+                $otpInput->sendKeys($otp);
+
+                $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
+
+                if ($useSmsActivate) {
+                    $finishApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=6&id=$orderId";
+                    file_get_contents($finishApiUrl);
+                }
+
+                echo "🎉 SUKSES: Verifikasi berhasil!\n";
+                break; // Keluar dari loop jika sukses
             }
-
-            $otpInput = $this->driver->findElement(WebDriverBy::id('code'));
-            $otpInput->sendKeys($otp);
-
-            $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
-
-            if ($useSmsActivate) {
-                // Konfirmasi OTP di SMS-Activate
-                $finishApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=setStatus&status=6&id=$orderId";
-                file_get_contents($finishApiUrl);
-            }
-
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-            echo "🎉 SUKSES: Verifikasi berhasil!\n";
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
         } catch (Exception $e) {
             echo "\nTerjadi error: " . $e->getMessage();
-            $this->restartProgram();
         }
 
 
@@ -565,7 +720,7 @@ class xixixixi
             $day,
             $month,
             $year,
-            $username,
+            $username . "@gmail.com",
             $password
         ];
 
