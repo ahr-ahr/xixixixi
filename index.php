@@ -143,7 +143,7 @@ class xixixixi
         //$url1 = 'https://accounts.google.com/signup/v2/webcreateaccount?flowName=GlifWebSignIn&flowEntry=SignUp';
         //$url1 = 'https://accounts.google.com/signup';
         $url1 = 'https://workspace.google.com/intl/en-US/gmail/';
-        $url1 = 'https://www.google.com';
+        //$url1 = 'https://www.google.com';
         $url3 = 'https://httpbin.org/user-agent';
         $url4 = 'https://ipapi.co/json/';
 
@@ -232,136 +232,136 @@ class xixixixi
         $this->driver->close();
         $this->driver->switchTo()->window($windows[0]);
 
-        $searchBox = $this->driver->findElement(WebDriverBy::name('q'));
-        $searchBox->sendKeys('Google Account Signup')->submit();
-        sleep(rand(2, 4));
+        //         $searchBox = $this->driver->findElement(WebDriverBy::name('q'));
+//         $searchBox->sendKeys('Google Account Signup')->submit();
+//         sleep(rand(2, 4));
 
-        $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//a[.//span[contains(text(), 'Sign in - Google Accounts')]]")
-            )
-        );
+        //         $this->driver->wait(10)->until(
+//             WebDriverExpectedCondition::presenceOfElementLocated(
+//                 WebDriverBy::xpath("//a[.//span[contains(text(), 'Sign in - Google Accounts')]]")
+//             )
+//         );
 
-        $signupLink = $this->driver->findElement(
-            WebDriverBy::xpath("//a[.//span[contains(text(), 'Sign in - Google Accounts')]]")
-        );
+        //         $signupLink = $this->driver->findElement(
+//             WebDriverBy::xpath("//a[.//span[contains(text(), 'Sign in - Google Accounts')]]")
+//         );
 
-        $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$signupLink]);
-        sleep(rand(1, 2));
+        //         $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$signupLink]);
+//         sleep(rand(1, 2));
 
-        $this->driver->executeScript("
-    const event = new MouseEvent('mouseover', { bubbles: true });
-    arguments[0].dispatchEvent(event);
-", [$signupLink]);
-        sleep(rand(1, 2));
+        //         $this->driver->executeScript("
+//     const event = new MouseEvent('mouseover', { bubbles: true });
+//     arguments[0].dispatchEvent(event);
+// ", [$signupLink]);
+//         sleep(rand(1, 2));
 
-        $signupLink->click();
-        sleep(rand(2, 3));
-
-
-        $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//button[.//span[text()='Create account']] | //a[contains(@href, '/lifecycle/flows/signup')]")
-            )
-        );
-
-        $buatAkunButton = null;
-
-        try {
-            $buatAkunButton = $this->driver->findElement(WebDriverBy::xpath("//button[.//span[text()='Create account']]"));
-        } catch (NoSuchElementException $e) {
-            try {
-                $buatAkunButton = $this->driver->findElement(WebDriverBy::xpath("//a[contains(@href, '/lifecycle/flows/signup')]"));
-            } catch (NoSuchElementException $e) {
-                throw new Exception("Elemen 'Create account' tidak ditemukan!");
-            }
-        }
-
-        $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$buatAkunButton]);
-        sleep(rand(1, 2));
-
-        $this->driver->executeScript("
-    const event = new MouseEvent('mouseover', { bubbles: true });
-    arguments[0].dispatchEvent(event);
-", [$buatAkunButton]);
-        sleep(rand(1, 2));
-
-        $buatAkunButton->click();
-        sleep(rand(2, 3));
-
-        $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//li[.//span[text()='For my personal use']]")
-            )
-        );
-
-        $personalUseOption = $this->driver->findElement(WebDriverBy::xpath("//li[.//span[text()='For my personal use']]"));
-
-        $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$personalUseOption]);
-        sleep(rand(1, 2));
-
-        $this->driver->executeScript("
-    const event = new MouseEvent('mouseover', { bubbles: true });
-    arguments[0].dispatchEvent(event);
-", [$personalUseOption]);
-        sleep(rand(1, 2));
-
-        $personalUseOption->click();
-        sleep(rand(2, 3));
+        //         $signupLink->click();
+//         sleep(rand(2, 3));
 
 
+        //         $this->driver->wait(10)->until(
+//             WebDriverExpectedCondition::presenceOfElementLocated(
+//                 WebDriverBy::xpath("//button[.//span[text()='Create account']] | //a[contains(@href, '/lifecycle/flows/signup')]")
+//             )
+//         );
 
-        //         $dropdown = $this->driver->executeScript("
-// const dropdownButton = document.querySelector('gws-dropdown-button');
-// if (dropdownButton) {
-//     dropdownButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        //         $buatAkunButton = null;
 
-        //     const mouseOverEvent = new MouseEvent('mouseover', { bubbles: true });
-//     dropdownButton.dispatchEvent(mouseOverEvent);
-
-        //     setTimeout(() => {
-//         dropdownButton.click();
-//         console.log('Dropdown diklik!');
-//     }, Math.random() * 500 + 500); // Delay antara 500-1000ms
-
-        //     return true;
-// } else {
-//     console.log('❌ Dropdown tidak ditemukan!');
-//     return false;
-// }
-// ");
-
-        //         if ($dropdown) {
-//             sleep(rand(1, 2));
-
-        //             $personalUse = $this->driver->executeScript("
-//     const personalUseButton = [...document.querySelectorAll('a')].find(a => a.innerText.includes('For my personal use'));
-//     if (personalUseButton) {
-//         personalUseButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        //         // Simulasi hover sebelum klik
-//         const mouseOverEvent = new MouseEvent('mouseover', { bubbles: true });
-//         personalUseButton.dispatchEvent(mouseOverEvent);
-
-        //         // Delay acak sebelum klik
-//         setTimeout(() => {
-//             personalUseButton.click();
-//             console.log('✅ Berhasil klik For my personal use!');
-//         }, Math.random() * 700 + 300); // Delay antara 300-1000ms
-
-        //         return true;
-//     } else {
-//         console.log('❌ Opsi For my personal use tidak ditemukan!');
-//         return false;
-//     }
-// ");
-
-        //             if (!$personalUse) {
-//                 throw new Exception("Gagal menemukan atau mengklik opsi 'For my personal use'.");
+        //         try {
+//             $buatAkunButton = $this->driver->findElement(WebDriverBy::xpath("//button[.//span[text()='Create account']]"));
+//         } catch (NoSuchElementException $e) {
+//             try {
+//                 $buatAkunButton = $this->driver->findElement(WebDriverBy::xpath("//a[contains(@href, '/lifecycle/flows/signup')]"));
+//             } catch (NoSuchElementException $e) {
+//                 throw new Exception("Elemen 'Create account' tidak ditemukan!");
 //             }
-//         } else {
-//             throw new Exception("Gagal menemukan atau mengklik dropdown 'Create an account'.");
 //         }
+
+        //         $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$buatAkunButton]);
+//         sleep(rand(1, 2));
+
+        //         $this->driver->executeScript("
+//     const event = new MouseEvent('mouseover', { bubbles: true });
+//     arguments[0].dispatchEvent(event);
+// ", [$buatAkunButton]);
+//         sleep(rand(1, 2));
+
+        //         $buatAkunButton->click();
+//         sleep(rand(2, 3));
+
+        //         $this->driver->wait(10)->until(
+//             WebDriverExpectedCondition::presenceOfElementLocated(
+//                 WebDriverBy::xpath("//li[.//span[text()='For my personal use']]")
+//             )
+//         );
+
+        //         $personalUseOption = $this->driver->findElement(WebDriverBy::xpath("//li[.//span[text()='For my personal use']]"));
+
+        //         $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$personalUseOption]);
+//         sleep(rand(1, 2));
+
+        //         $this->driver->executeScript("
+//     const event = new MouseEvent('mouseover', { bubbles: true });
+//     arguments[0].dispatchEvent(event);
+// ", [$personalUseOption]);
+//         sleep(rand(1, 2));
+
+        //         $personalUseOption->click();
+//         sleep(rand(2, 3));
+
+
+
+        $dropdown = $this->driver->executeScript("
+const dropdownButton = document.querySelector('gws-dropdown-button');
+if (dropdownButton) {
+    dropdownButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            const mouseOverEvent = new MouseEvent('mouseover', { bubbles: true });
+    dropdownButton.dispatchEvent(mouseOverEvent);
+
+            setTimeout(() => {
+        dropdownButton.click();
+        console.log('Dropdown diklik!');
+    }, Math.random() * 500 + 500); // Delay antara 500-1000ms
+
+            return true;
+} else {
+    console.log('❌ Dropdown tidak ditemukan!');
+    return false;
+}
+");
+
+        if ($dropdown) {
+            sleep(rand(1, 2));
+
+            $personalUse = $this->driver->executeScript("
+    const personalUseButton = [...document.querySelectorAll('a')].find(a => a.innerText.includes('For my personal use'));
+    if (personalUseButton) {
+        personalUseButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Simulasi hover sebelum klik
+        const mouseOverEvent = new MouseEvent('mouseover', { bubbles: true });
+        personalUseButton.dispatchEvent(mouseOverEvent);
+
+                // Delay acak sebelum klik
+        setTimeout(() => {
+            personalUseButton.click();
+            console.log('✅ Berhasil klik For my personal use!');
+        }, Math.random() * 700 + 300); // Delay antara 300-1000ms
+
+                return true;
+    } else {
+        console.log('❌ Opsi For my personal use tidak ditemukan!');
+        return false;
+    }
+");
+
+            if (!$personalUse) {
+                throw new Exception("Gagal menemukan atau mengklik opsi 'For my personal use'.");
+            }
+        } else {
+            throw new Exception("Gagal menemukan atau mengklik dropdown 'Create an account'.");
+        }
 
         $firstName = preg_replace('/[^A-Za-z]/', '', $this->faker->firstName);
         $lastName = preg_replace('/[^A-Za-z]/', '', $this->faker->lastName);
@@ -412,6 +412,7 @@ class xixixixi
         $month = $birthDate->format('F');
         $year = $birthDate->format('Y');
 
+        sleep(2);
         $this->slowType($this->driver->findElement(WebDriverBy::id('day')), $day);
 
         $monthElement = $this->driver->findElement(WebDriverBy::id('month'));
@@ -434,8 +435,7 @@ class xixixixi
             throw new Exception("Dropdown bulan tidak ditemukan atau tidak dapat diakses.");
         }
 
-        sleep(1);
-
+        sleep(2);
         $this->slowType($this->driver->findElement(WebDriverBy::id('year')), $year);
 
         $genderElement = $this->driver->findElement(WebDriverBy::id('gender'));
@@ -484,6 +484,16 @@ class xixixixi
             );
         }
 
+        function generateRandomString($length = 3)
+        {
+            $characters = 'abcdefghijklmnopqrstuvwxyz';
+            $randomString = '';
+            for ($i = 0; $i < $length; $i++) {
+                $randomString .= $characters[rand(0, strlen($characters) - 1)];
+            }
+            return $randomString;
+        }
+
         $attempt = 0;
         $maxAttempts = 3;
 
@@ -499,30 +509,37 @@ class xixixixi
 
             sleep(3);
 
-            $this->driver->wait(20)->until(
+            $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
+
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
-            $username = "a" . $firstName . "h" . $lastName . "r";
+            $randomLetters = generateRandomString(3);
+            $username = $firstName . $randomLetters;
             $this->slowType($usernameField, $username);
 
-            usleep(rand(500000, 1500000));
+            sleep(1);
+
+            $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
+            );
+
+            sleep(1);
+
+            $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
             try {
-                sleep(2);
-
-                $errorElement = $this->driver->findElements(
-                    WebDriverBy::xpath("//*[contains(text(), 'That username is taken. Try another.')]")
+                // Tunggu maksimal 5 detik untuk melihat apakah pesan error muncul
+                $this->driver->wait(10)->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(
+                        WebDriverBy::xpath("//div[contains(@class, 'Ekjuhf') and contains(text(), 'That username is taken. Try another.')]")
+                    )
                 );
 
-                if (count($errorElement) > 0) {
-                    echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
-                    $attempt++;
-                } else {
-                    echo "✅ Username '$username' tersedia!\n";
-                    break;
-                }
+                echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
+                $attempt++;
             } catch (TimeoutException $e) {
+                // Jika tidak ada pesan error setelah 5 detik, berarti username tersedia
                 echo "✅ Username '$username' tersedia!\n";
                 break;
             }
@@ -531,15 +548,6 @@ class xixixixi
         if ($attempt >= $maxAttempts) {
             throw new Exception("Gagal mendapatkan username yang tersedia setelah $maxAttempts percobaan.");
         }
-
-
-        $this->driver->wait(20)->until(
-            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
-        );
-
-        sleep(3);
-
-        $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
         $this->driver->wait(20)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::cssSelector('div[jsname="ornU0b"]'))
@@ -575,12 +583,13 @@ class xixixixi
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
+        );
+
         try {
             while (true) {
                 try {
-                    $this->driver->wait(10)->until(
-                        WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body'))
-                    );
                     $errorElement = (new WebDriverWait($this->driver, 10))->until(
                         WebDriverExpectedCondition::presenceOfElementLocated(
                             WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account.')]")
@@ -631,7 +640,7 @@ class xixixixi
                 // 5Sim logic
                 if ($use5Sim && $phoneNumber == '') {
                     $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-                    $country = 'indonesia';
+                    $country = 'russia';
                     $operator = 'any';
                     $product = 'google';
 
@@ -727,7 +736,7 @@ class xixixixi
                 sleep(5);
 
                 // Check for number errors
-                $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.') or contains(text), 'There was a problem verifying your phone number.')]"));
+                $errorElements = $this->driver->findElements(WebDriverBy::xpath("//*[contains(text(), 'This phone number has been used too many times') or contains(text(), 'This phone number cannot be used for verification.') or contains(text(), 'This phone number format is not recognized. Please check the country and number.') or contains(text(), 'There was a problem verifying your phone number.')]"));
                 if (count($errorElements) > 0) {
                     echo "⚠️  Nomor tidak valid. Mencoba nomor baru...\n";
 
@@ -848,6 +857,7 @@ class xixixixi
             echo "Error: " . $e->getMessage();
         }
 
+        sleep(2);
 
         $this->driver->wait(20)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
