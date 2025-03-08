@@ -531,8 +531,7 @@ if (dropdownButton) {
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
             try {
-                // Tunggu maksimal 5 detik untuk melihat apakah pesan error muncul
-                $this->driver->wait(10)->until(
+                $this->driver->wait(5)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
                         WebDriverBy::xpath("//div[contains(@class, 'Ekjuhf') and contains(text(), 'That username is taken. Try another.')]")
                     )
@@ -541,7 +540,6 @@ if (dropdownButton) {
                 echo "⚠️  Username '$username' sudah diambil, mencoba variasi lain...\n";
                 $attempt++;
             } catch (TimeoutException $e) {
-                // Jika tidak ada pesan error setelah 5 detik, berarti username tersedia
                 echo "✅ Username '$username' tersedia!\n";
                 break;
             }
@@ -891,7 +889,15 @@ if (dropdownButton) {
             echo "❌ Terjadi kesalahan saat mengisi recovery email: " . $e->getMessage() . "\n";
         }
 
-        $nextButton = $this->driver->executeScript("document.querySelector('button span.VfPpkd-vQzf8d').click();");
+        sleep(2);
+
+        $this->driver->executeScript("
+    document.querySelectorAll('button span.VfPpkd-vQzf8d').forEach(el => {
+        if (el.innerText.trim() === 'Next') {
+            el.click();
+        }
+    });
+");
         sleep(2);
 
         $this->driver->executeScript("
