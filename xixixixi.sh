@@ -2,22 +2,36 @@
 
 echo -e "🚀 SCRIPT INFORMATION\n\nScript ini dibuat oleh: Ahmad Haikal Rizal\nInstagram: @lelekuningcoy\nGitHub: github.com/ahr-ahr\n\nSabar bos..."
 
-read -p "Masukkan jumlah Chrome yang ingin dibuka: " chromeCount
+# Meminta email recovery
+read -p "Masukkan email recovery Anda: " recoveryEmail
 
-if [[ -z "$chromeCount" || "$chromeCount" -le 0 ]]; then
-    echo "Anda tidak memasukkan jumlah yang valid! Script akan berhenti."
+if [[ -z "$recoveryEmail" ]]; then
+    echo "Email recovery tidak boleh kosong! Script berhenti."
     exit 1
 fi
 
-chromedriver_path="/path/to/chromedriver"
-$chromedriver_path --port=9515 --enable-unsafe-webgl --enable-unsafe-swiftshader &
-sleep 3
+echo "🚀 Masukkan jumlah Chrome yang ingin dibuka:"
+read chromeCount
 
-# Menjalankan PHP script sesuai jumlah yang diminta
-for ((i=1; i<=chromeCount; i++))
-do
-    php /path/to/index.php &
+if [[ -z "$chromeCount" || "$chromeCount" -le 0 ]]; then
+    echo "Jumlah tidak valid! Script berhenti."
+    exit 1
+fi
+
+# Jalankan beberapa ChromeDriver di port berbeda
+for ((i=0; i<chromeCount; i++)); do
+    port=$((9515 + i))
+    ./chromedriver --port=$port &
     sleep 1
 done
 
-exit 0
+# Jalankan script PHP dengan port berbeda
+for ((i=0; i<chromeCount; i++)); do
+    port=$((9515 + i))
+    
+    # ✅ Pastikan --email dikutip agar aman
+    php /path/to/index.php --port=$port --email="$recoveryEmail" &
+    sleep 1
+done
+
+wait

@@ -19,12 +19,14 @@ class xixixixi
     private $driver;
     private $faker;
     private $port;
+    private $recoveryEmail;
 
     public function __construct()
     {
-        $options = getopt("", ["port:"]);
+        $options = getopt("", ["port:", "email:"]);
         $this->port = $options['port'] ?? 9515;
         $webdriverUrl = "http://localhost:" . $this->port;
+        $this->recoveryEmail = $options['email'] ?? '';
 
         $this->faker = Faker::create();
         $options = new ChromeOptions();
@@ -602,7 +604,7 @@ if (dropdownButton) {
                         return;
                     }
                 } catch (TimeoutException $e) {
-                    echo "✅ Tidak ada pesan error, lanjutkan proses.\n";
+                    //echo "✅ Tidak ada pesan error, lanjutkan proses.\n";
                 }
 
 
@@ -640,7 +642,7 @@ if (dropdownButton) {
                 // 5Sim logic
                 if ($use5Sim && $phoneNumber == '') {
                     $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-                    $country = 'russia';
+                    $country = 'indonesia';
                     $operator = 'any';
                     $product = 'google';
 
@@ -859,10 +861,35 @@ if (dropdownButton) {
 
         sleep(2);
 
-        $this->driver->wait(20)->until(
-            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
-        )->click();
-        sleep(2);
+        try {
+            $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id("recoveryEmailId"))
+            );
+
+            if (!empty($this->recoveryEmail)) {
+                $recoveryEmailInput = $this->driver->findElement(WebDriverBy::id("recoveryEmailId"));
+                $recoveryEmailInput->clear();
+                $recoveryEmailInput->sendKeys($this->recoveryEmail);
+
+                $this->driver->wait(10)->until(
+                    WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoveryNext"))
+                )->click();
+
+                echo "✅ Email recovery berhasil dimasukkan: {$this->recoveryEmail}\n";
+            } else {
+                try {
+                    $this->driver->wait(10)->until(
+                        WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
+                    )->click();
+
+                    echo "⏩ Email recovery dikosongkan, melewati langkah ini.\n";
+                } catch (Exception $e) {
+                    echo "⚠️ Tidak ada tombol 'Skip', lanjut tanpa recovery email.\n";
+                }
+            }
+        } catch (Exception $e) {
+            echo "❌ Terjadi kesalahan saat mengisi recovery email: " . $e->getMessage() . "\n";
+        }
 
         $nextButton = $this->driver->executeScript("document.querySelector('button span.VfPpkd-vQzf8d').click();");
         sleep(2);
