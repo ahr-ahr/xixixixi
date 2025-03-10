@@ -68,7 +68,7 @@ class xixixixi
         } elseif ($useAuthSocks) {
             $proxyServer = "socks5://user:pass@ip:port";
         } elseif ($useNoAuthSocks) {
-            $proxyServer = "socks5://127.0.0.1:10000";
+            $proxyServer = "socks5://127.0.0.1:10001";
         } elseif ($useAuthHttp) {
             $proxyServer = "http://user:pass@ip:port";
         } elseif ($useNoAuthHttp) {
@@ -85,22 +85,22 @@ class xixixixi
             "--load-extension=$extensionPath",
             "--disable-popup-blocking",
             "--disable-notifications",
-            "--ignore-certificate-errors",
+            //"--ignore-certificate-errors",
             "--no-sandbox",
             "--disable-gpu",
             "--disable-dev-shm-usage",
             "--disable-blink-features=AutomationControlled",
-            "--start-maximized",
+            //"--start-maximized",
             "--disable-infobars",
             "--disable-dev-shm-usage",
             //"--disable-extensions",
             "--disable-web-security",
             "--allow-running-insecure-content",
             "--disable-features=IsolateOrigins,site-per-process",
-            "--window-size=1920,1080",
+            //"--window-size=1920,1080",
             "--disable-background-timer-throttling",
             "--disable-backgrounding-occluded-windows",
-            "--disable-renderer-backgrounding",
+            //"--disable-renderer-backgrounding",
             "--disable-client-side-phishing-detection"
         ]);
 
@@ -416,6 +416,7 @@ if (dropdownButton) {
 
         sleep(2);
         $this->slowType($this->driver->findElement(WebDriverBy::id('day')), $day);
+        sleep(rand(1, 3));
 
         $monthElement = $this->driver->findElement(WebDriverBy::id('month'));
 
@@ -437,8 +438,9 @@ if (dropdownButton) {
             throw new Exception("Dropdown bulan tidak ditemukan atau tidak dapat diakses.");
         }
 
-        sleep(2);
+        sleep(1);
         $this->slowType($this->driver->findElement(WebDriverBy::id('year')), $year);
+        sleep(rand(1, 3));
 
         $genderElement = $this->driver->findElement(WebDriverBy::id('gender'));
 
@@ -466,7 +468,7 @@ if (dropdownButton) {
 
         $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
-        $username = $firstName . $lastName . $year;
+        //$username = $firstName . $lastName . $year;
 
         try {
             $this->driver->wait(20)->until(
@@ -507,26 +509,26 @@ if (dropdownButton) {
             );
 
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
+            sleep(1);
             $usernameField->clear();
 
             sleep(3);
 
-            $this->driver->wait(10)->until(
+            $this->driver->wait(20)->until(
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
 
             $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
             $randomLetters = generateRandomString(3);
-            $username = $firstName . $randomLetters;
+            $username = "miaw" . $randomLetters . "h";
             $this->slowType($usernameField, $username);
-
-            sleep(1);
+            sleep(rand(1, 3));
 
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::cssSelector('button[type="button"]'))
             );
 
-            sleep(1);
+            sleep(rand(1, 3));
 
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
@@ -592,7 +594,7 @@ if (dropdownButton) {
                 try {
                     $errorElement = (new WebDriverWait($this->driver, 10))->until(
                         WebDriverExpectedCondition::presenceOfElementLocated(
-                            WebDriverBy::xpath("//*[contains(text(), 'Sorry, we could not create your Google Account.')]")
+                            WebDriverBy::xpath("//div[contains(text(), 'Error') or contains(text(), 'Scan QR Code to verify your phone number')]")
                         )
                     );
 
@@ -602,16 +604,16 @@ if (dropdownButton) {
                         return;
                     }
                 } catch (TimeoutException $e) {
-                    //echo "✅ Tidak ada pesan error, lanjutkan proses.\n";
+                    echo "✅ Tidak ada pesan error, lanjutkan proses.\n";
                 }
-
 
                 $this->driver->wait(20)->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
                 );
 
+                $useVirtuSim = true;
                 $useSmsActivate = false;
-                $use5Sim = true;
+                $use5Sim = false;
                 $useSmsPool = false;
                 $useSmsHub = false;
 
@@ -619,7 +621,25 @@ if (dropdownButton) {
                 $orderId = '';
 
                 // SMS-Activate logic
-                if ($useSmsActivate) {
+                if ($useVirtuSim && $phoneNumber == '') {
+                    $apiKey = 'ao7Y8HAIesDyOZCG1g2nUVTXft69NK';
+                    $serviceId = '2880'; // ID layanan di VirtuSim
+                    $operator = 'any';
+
+                    $apiUrl = "https://virtusim.com/api/json.php?api_key=$apiKey&action=order&service=$serviceId&operator=$operator";
+                    $response = file_get_contents($apiUrl);
+                    $data = json_decode($response, true);
+
+                    if (!$data['status']) {
+                        echo "Gagal mendapatkan nomor dari VirtuSim: " . $data['data']['msg'] . "\n";
+                        continue;
+                    }
+
+                    $phoneNumber = $data['data']['number'];
+                    $orderId = $data['data']['id'];
+                }
+
+                if ($useSmsActivate && $phoneNumber == '') {
                     $apiKey = '83eA2A1142980d5426fb50bb782b62f1';
                     $country = '6'; // Country code for Indonesia (or other country as needed)
                     $service = 'go'; // Service code for Google
@@ -640,8 +660,8 @@ if (dropdownButton) {
                 // 5Sim logic
                 if ($use5Sim && $phoneNumber == '') {
                     $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-                    $country = 'indonesia';
-                    $operator = 'any';
+                    $country = 'england';
+                    $operator = 'virtual51';
                     $product = 'google';
 
                     $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
@@ -722,13 +742,14 @@ if (dropdownButton) {
                     }
 
                     $parts = explode(':', $response);
-                    $orderId = $parts[1]; // Order ID
-                    $phoneNumber = $parts[2]; // Phone number
+                    $orderId = $parts[1];
+                    $phoneNumber = $parts[2];
                 }
 
-                // Enter phone number in input
                 $phoneNumberInput = $this->driver->findElement(WebDriverBy::id('phoneNumberId'));
+                sleep(rand(1, 2));
                 $phoneNumberInput->clear();
+                sleep(rand(1, 2));
                 $phoneNumberInput->click();
                 $phoneNumberInput->sendKeys($phoneNumber);
 
@@ -783,7 +804,27 @@ if (dropdownButton) {
                         curl_close($ch);
                         echo "✅ Order dengan ID: $orderId berhasil dibatalkan di SMSHub.\n";
                         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                    } elseif ($useVirtuSim) {
+                        sleep(180);
+
+                        $banApiUrl = "https://virtusim.com/api/json.php?api_key=$apiKey&action=set_status&id=$orderId&status=2";
+
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $banApiUrl);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Accept: application/json"]);
+                        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+                        $response = curl_exec($ch);
+                        curl_close($ch);
+
+                        $cancelResponse = json_decode($response, true);
+                        if ($cancelResponse['status'] === true) {
+                            echo "✅ Order dengan ID: $orderId berhasil dibatalkan di VirtuSim setelah 3 menit.\n";
+                        } else {
+                            echo "❌ Gagal membatalkan order di VirtuSim: " . $cancelResponse['msg'] . "\n";
+                        }
                     }
+
                     continue;
                 }
 
@@ -793,13 +834,26 @@ if (dropdownButton) {
 
                 // Check OTP
                 $otp = null;
-                if ($useSmsActivate) {
-                    $otpApiUrl = "https://api.sms-activate.ae/stubs/handler_api.php?api_key=$apiKey&action=getStatus&id=$orderId";
+                if ($useVirtuSim) {
+                    $otpApiUrl = "https://virtusim.com/api/json.php?api_key=$apiKey&action=active_order";
                     do {
                         sleep(5);
-                        $response = file_get_contents($otpApiUrl);
-                        if (strpos($response, 'STATUS_OK') !== false) {
-                            $otp = explode(':', $response)[1];
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $otpApiUrl);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        $otpResponse = curl_exec($ch);
+                        curl_close($ch);
+
+                        $otpData = json_decode($otpResponse, true);
+                        $otp = null;
+
+                        if ($otpData['status'] === true && isset($otpData['data'])) {
+                            foreach ($otpData['data'] as $order) {
+                                if ($order['number'] === $phoneNumber && $order['status'] === "Otp Diterima") {
+                                    $otp = trim($order['otp']);
+                                    break;
+                                }
+                            }
                         }
                     } while (!$otp);
                 } elseif ($use5Sim) {
@@ -838,6 +892,14 @@ if (dropdownButton) {
                         if (strpos($response, 'STATUS_OK') !== false) {
                             $otp = explode(':', $response)[1];
                         }
+                    } while (!$otp);
+                } elseif ($useVirtuSim) {
+                    $otpApiUrl = "https://virtusim.com/api/json.php?api_key=$apiKey&action=active_order";
+                    do {
+                        sleep(5);
+                        $response = file_get_contents($otpApiUrl);
+                        $otpData = json_decode($response, true);
+                        $otp = $otpData['data']['code'] ?? null;
                     } while (!$otp);
                 }
 
