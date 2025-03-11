@@ -20,6 +20,7 @@ class xixixixi
     private $faker;
     private $port;
     private $recoveryEmail;
+    private $passwordAccount;
 
     public function __construct()
     {
@@ -393,6 +394,7 @@ if (dropdownButton) {
         sleep(rand(1, 2));
         $nextButton->click();
 
+        // Tunggu elemen muncul
         $this->driver->wait(20)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('day'))
         );
@@ -409,13 +411,35 @@ if (dropdownButton) {
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('gender'))
         );
 
+        // Generate tanggal lahir acak
         $birthDate = $this->faker->dateTimeBetween('-50 years', '-18 years');
         $day = $birthDate->format('d');
         $month = $birthDate->format('F');
         $year = $birthDate->format('Y');
 
         sleep(2);
-        $this->slowType($this->driver->findElement(WebDriverBy::id('day')), $day);
+
+        function ensureInputFilled($driver, $elementId, $value)
+        {
+            $inputElement = $driver->findElement(WebDriverBy::id($elementId));
+            $maxRetries = 3;
+            $retryCount = 0;
+
+            do {
+                $inputElement->clear();
+                usleep(rand(500000, 1000000));
+                $inputElement->sendKeys($value);
+                usleep(rand(500000, 1000000));
+                $currentValue = $inputElement->getAttribute('value');
+                $retryCount++;
+            } while ($currentValue !== (string) $value && $retryCount < $maxRetries);
+
+            if ($currentValue !== (string) $value) {
+                throw new Exception("Gagal mengisi elemen ID: $elementId setelah beberapa percobaan.");
+            }
+        }
+
+        ensureInputFilled($this->driver, 'day', $day);
         sleep(rand(1, 3));
 
         $monthElement = $this->driver->findElement(WebDriverBy::id('month'));
@@ -423,23 +447,18 @@ if (dropdownButton) {
         if ($monthElement->isDisplayed()) {
             $action = new WebDriverActions($this->driver);
             $action->moveToElement($monthElement)->perform();
-
             usleep(rand(500000, 1500000));
-
             $monthElement->click();
-
             usleep(rand(500000, 1000000));
-
             $monthDropdown = new WebDriverSelect($monthElement);
             $monthDropdown->selectByVisibleText($month);
-
             usleep(rand(500000, 1000000));
         } else {
             throw new Exception("Dropdown bulan tidak ditemukan atau tidak dapat diakses.");
         }
 
         sleep(1);
-        $this->slowType($this->driver->findElement(WebDriverBy::id('year')), $year);
+        ensureInputFilled($this->driver, 'year', $year);
         sleep(rand(1, 3));
 
         $genderElement = $this->driver->findElement(WebDriverBy::id('gender'));
@@ -447,18 +466,15 @@ if (dropdownButton) {
         if ($genderElement->isDisplayed()) {
             $action = new WebDriverActions($this->driver);
             $action->moveToElement($genderElement)->perform();
-
             usleep(rand(500000, 1500000));
 
             $genderDropdown = new WebDriverSelect($genderElement);
             $randomGender = rand(1, 2);
 
             $genderElement->click();
-
             usleep(rand(500000, 1500000));
 
             $genderDropdown->selectByValue((string) $randomGender);
-
             usleep(rand(500000, 1000000));
         } else {
             throw new Exception("Dropdown gender tidak ditemukan atau tidak dapat diakses.");
@@ -488,6 +504,26 @@ if (dropdownButton) {
             );
         }
 
+        function ensureInputFilled2($driver, $elementName, $value)
+        {
+            $inputElement = $driver->findElement(WebDriverBy::name($elementName));
+            $maxRetries = 3;
+            $retryCount = 0;
+
+            do {
+                $inputElement->clear();
+                usleep(rand(500000, 1000000));
+                $inputElement->sendKeys($value);
+                usleep(rand(500000, 1000000));
+                $currentValue = $inputElement->getAttribute('value');
+                $retryCount++;
+            } while ($currentValue !== (string) $value && $retryCount < $maxRetries);
+
+            if ($currentValue !== (string) $value) {
+                throw new Exception("Gagal mengisi elemen '$elementName' setelah beberapa percobaan.");
+            }
+        }
+
         function generateRandomString($length = 3)
         {
             $characters = 'abcdefghijklmnopqrstuvwxyz';
@@ -508,20 +544,10 @@ if (dropdownButton) {
                 WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
             );
 
-            $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
-            sleep(1);
-            $usernameField->clear();
-
-            sleep(3);
-
-            $this->driver->wait(20)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
-            );
-
-            $usernameField = $this->driver->findElement(WebDriverBy::name('Username'));
             $randomLetters = generateRandomString(3);
             $username = "miaw" . $randomLetters . "h";
-            $this->slowType($usernameField, $username);
+
+            ensureInputFilled2($this->driver, 'Username', $username);
             sleep(rand(1, 3));
 
             $this->driver->wait(10)->until(
@@ -611,9 +637,9 @@ if (dropdownButton) {
                     WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id('phoneNumberId'))
                 );
 
-                $useVirtuSim = true;
+                $useVirtuSim = false;
                 $useSmsActivate = false;
-                $use5Sim = false;
+                $use5Sim = true;
                 $useSmsPool = false;
                 $useSmsHub = false;
 
@@ -660,8 +686,8 @@ if (dropdownButton) {
                 // 5Sim logic
                 if ($use5Sim && $phoneNumber == '') {
                     $token = 'eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA0NTQ5OTEsImlhdCI6MTcyODkxODk5MSwicmF5IjoiNmM3NjUyYzM1YjI0NjUzY2VhZGRiODdlMjU1MDgxY2QiLCJzdWIiOjI3NzMyMDl9.O0XspCzUhluZyT7nLEIBCfkju1Yf48lWMPy3c-QXGt5zHpN32zt5OsY-IiL26aJ6Rc2ozkPCnA71JEK0QDp086r88WOiCqeogr-ssfl2RVK3G0Rh0Cq42Cb6vbv2y0JOagOfTp8EowzB1k8IZpetg0xZZw3JhuErguDPcpeR-Jk5IwqXb9RmXaKCU8f236aPT8PWdvxdm5amPtHRIPh7l1_7dQhAnoYNFwb8mApeyqFWDS6wJc1u9ZNOogrQnoZa-JVj-BfmnkU96kP_QWFxcBJs9BAWHqt8xei7DX5wKK0qiZaE1SGoSZe6hE-WnfRQXrzR0pukDa64EHTuHcLn2w';
-                    $country = 'england';
-                    $operator = 'virtual51';
+                    $country = 'indonesia';
+                    $operator = 'any';
                     $product = 'google';
 
                     $apiUrl = "https://5sim.net/v1/user/buy/activation/$country/$operator/$product";
