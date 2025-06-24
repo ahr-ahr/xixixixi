@@ -1008,21 +1008,25 @@ if (dropdownButton) {
         sleep(2);
 
         try {
+            // Tunggu sampai form recovery muncul
             $this->driver->wait(10)->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::id("recoveryEmailId"))
             );
 
+            // Cek apakah recovery email tersedia
             if (!empty($this->recoveryEmail)) {
                 $recoveryEmailInput = $this->driver->findElement(WebDriverBy::id("recoveryEmailId"));
                 $recoveryEmailInput->clear();
                 $recoveryEmailInput->sendKeys($this->recoveryEmail);
 
+                // Klik tombol Next
                 $this->driver->wait(10)->until(
                     WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoveryNext"))
                 )->click();
 
                 echo "✅ Email recovery berhasil dimasukkan: {$this->recoveryEmail}\n";
             } else {
+                // Kalau kosong, cari tombol skip
                 try {
                     $this->driver->wait(10)->until(
                         WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::id("recoverySkip"))
@@ -1030,31 +1034,62 @@ if (dropdownButton) {
 
                     echo "⏩ Email recovery dikosongkan, melewati langkah ini.\n";
                 } catch (Exception $e) {
-                    echo "⚠️ Tidak ada tombol 'Skip', lanjut tanpa recovery email.\n";
+                    echo "⚠️ Tombol 'Skip' tidak ditemukan, lanjut tanpa recovery email.\n";
                 }
             }
         } catch (Exception $e) {
-            echo "❌ Terjadi kesalahan saat mengisi recovery email: " . $e->getMessage() . "\n";
+            echo "❌ Gagal mengisi recovery email: " . $e->getMessage() . "\n";
         }
 
         sleep(2);
 
-        $this->driver->executeScript("
-    document.querySelectorAll('button span.VfPpkd-vQzf8d').forEach(el => {
-        if (el.innerText.trim() === 'Next') {
-            el.click();
+        // ✅ Klik tombol "Next"
+        try {
+            $nextButton = $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::elementToBeClickable(
+                    WebDriverBy::xpath("//span[text()='Next']/ancestor::button")
+                )
+            );
+            $nextButton->click();
+            echo "➡️ Klik tombol Next berhasil.\n";
+        } catch (Exception $e) {
+            // Fallback via JS jika gagal klik biasa
+            try {
+                $this->driver->executeScript("
+            const btn = [...document.querySelectorAll('button span')]
+                .find(el => el.innerText.trim() === 'Next');
+            if (btn) btn.click();
+        ");
+                echo "➡️ Klik Next via JavaScript berhasil.\n";
+            } catch (Exception $ex) {
+                echo "❌ Gagal klik tombol Next: " . $ex->getMessage() . "\n";
+            }
         }
-    });
-");
+
         sleep(2);
 
-        $this->driver->executeScript("
-    document.querySelectorAll('button span.VfPpkd-vQzf8d').forEach(el => {
-        if (el.innerText.trim() === 'I agree') {
-            el.click();
+        // ✅ Klik tombol "I agree"
+        try {
+            $agreeButton = $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::elementToBeClickable(
+                    WebDriverBy::xpath("//span[text()='I agree']/ancestor::button")
+                )
+            );
+            $agreeButton->click();
+            echo "✅ Klik tombol I agree berhasil.\n";
+        } catch (Exception $e) {
+            // Fallback via JS jika gagal klik biasa
+            try {
+                $this->driver->executeScript("
+            const btn = [...document.querySelectorAll('button span')]
+                .find(el => el.innerText.trim() === 'I agree');
+            if (btn) btn.click();
+        ");
+                echo "✅ Klik I agree via JavaScript berhasil.\n";
+            } catch (Exception $ex) {
+                echo "❌ Gagal klik tombol I agree: " . $ex->getMessage() . "\n";
+            }
         }
-    });
-");
 
         $data = [
             $firstName,
@@ -1073,6 +1108,22 @@ if (dropdownButton) {
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
         sleep(10);
+
+        try {
+            echo "🔒 Melakukan logout...\n";
+
+            // Arahkan ke URL logout resmi Google
+            $this->driver->get('https://accounts.google.com/Logout');
+
+            // Tunggu sampai benar-benar redirect
+            $this->driver->wait(10)->until(
+                WebDriverExpectedCondition::urlContains('ServiceLogin')
+            );
+
+            echo "✅ Berhasil logout dan kembali ke halaman login Google.\n";
+        } catch (Exception $e) {
+            echo "❌ Gagal logout: " . $e->getMessage() . "\n";
+        }
 
         $this->restartProgram();
 
