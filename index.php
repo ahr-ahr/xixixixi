@@ -13,6 +13,7 @@ use Faker\Factory as Faker;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverWait;
+use Facebook\WebDriver\Exception\ElementClickInterceptedException;
 
 class xixixixi
 {
@@ -98,7 +99,7 @@ class xixixixi
             "--disable-web-security",
             "--allow-running-insecure-content",
             "--disable-features=IsolateOrigins,site-per-process",
-            //"--window-size=1920,1080",
+            "--window-size=300,300",
             "--disable-background-timer-throttling",
             "--disable-backgrounding-occluded-windows",
             //"--disable-renderer-backgrounding",
@@ -448,10 +449,36 @@ if (dropdownButton) {
             $action = new WebDriverActions($this->driver);
             $action->moveToElement($monthElement)->perform();
             usleep(rand(500000, 1500000));
-            $monthElement->click();
-            usleep(rand(500000, 1000000));
-            $monthDropdown = new WebDriverSelect($monthElement);
-            $monthDropdown->selectByVisibleText($month);
+            $monthElement->click(); // buka dropdown
+            sleep(1); // beri waktu DOM render
+
+            // Tunggu salah satu elemen bulan tersedia (optional debug step)
+            $this->driver->wait(7)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(
+                    WebDriverBy::xpath("//*[normalize-space(text())='January']")
+                )
+            );
+
+            $monthXPath = "//*[normalize-space(text())='$month']";
+
+            // Tunggu sampai elemen bulan yang diinginkan bisa diklik
+            $this->driver->wait(5)->until(
+                WebDriverExpectedCondition::elementToBeClickable(
+                    WebDriverBy::xpath($monthXPath)
+                )
+            );
+
+            // Setelah aman, ambil elemen dan scroll ke tengah
+            $monthOption = $this->driver->findElement(WebDriverBy::xpath($monthXPath));
+            $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$monthOption]);
+
+            // Klik dengan fallback JS jika diperlukan
+            try {
+                $monthOption->click();
+            } catch (ElementClickInterceptedException $e) {
+                $this->driver->executeScript("arguments[0].click();", [$monthOption]);
+            }
+
             usleep(rand(500000, 1000000));
         } else {
             throw new Exception("Dropdown bulan tidak ditemukan atau tidak dapat diakses.");
@@ -468,13 +495,34 @@ if (dropdownButton) {
             $action->moveToElement($genderElement)->perform();
             usleep(rand(500000, 1500000));
 
-            $genderDropdown = new WebDriverSelect($genderElement);
-            $randomGender = rand(1, 2);
-
+            // Klik untuk buka dropdown
             $genderElement->click();
             usleep(rand(500000, 1500000));
 
-            $genderDropdown->selectByValue((string) $randomGender);
+            // Pilih gender (asumsi 1 = Male, 2 = Female)
+            $randomGender = rand(1, 2);
+            $genderText = $randomGender === 1 ? 'Male' : 'Female';
+
+            // Tunggu sampai opsi muncul
+            $this->driver->wait(5)->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(
+                    WebDriverBy::xpath("//*[normalize-space(text())='$genderText']")
+                )
+            );
+
+            // Klik opsi yang sesuai
+            $optionElement = $this->driver->findElement(
+                WebDriverBy::xpath("//*[normalize-space(text())='$genderText']")
+            );
+
+            $this->driver->executeScript("arguments[0].scrollIntoView({block: 'center'});", [$optionElement]);
+
+            try {
+                $optionElement->click();
+            } catch (ElementClickInterceptedException $e) {
+                $this->driver->executeScript("arguments[0].click();", [$optionElement]);
+            }
+
             usleep(rand(500000, 1000000));
         } else {
             throw new Exception("Dropdown gender tidak ditemukan atau tidak dapat diakses.");
@@ -486,24 +534,30 @@ if (dropdownButton) {
 
         //$username = $firstName . $lastName . $year;
 
+        // Tunggu radio "Create your own Gmail address" muncul
+        $this->driver->wait(20)->until(
+            WebDriverExpectedCondition::visibilityOfElementLocated(
+                WebDriverBy::xpath("//div[contains(text(), 'Create your own Gmail address')]")
+            )
+        );
+
+        // Scroll dan klik radio tersebut
+        $customRadio = $this->driver->findElement(
+            WebDriverBy::xpath("//div[contains(text(), 'Create your own Gmail address')]")
+        );
+        $this->driver->executeScript("arguments[0].scrollIntoView({block: 'center'});", [$customRadio]);
         try {
-            $this->driver->wait(20)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath('//div[@jsname="CeL6Qc" and contains(text(), "Create your own Gmail address")]'))
-            );
-
-            $this->driver->executeScript("document.querySelector('.zJKIV.lezCeb.kAVONc[jsname=\"ornU0b\"][data-value=\"custom\"]').click();");
-            sleep(3);
-
-            $this->driver->wait(20)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
-            );
-
-        } catch (NoSuchElementException $e) {
-            $this->driver->wait(20)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
-            );
+            $customRadio->click();
+        } catch (ElementClickInterceptedException $e) {
+            $this->driver->executeScript("arguments[0].click();", [$customRadio]);
         }
 
+        // Tunggu sampai input Username muncul
+        $this->driver->wait(20)->until(
+            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Username'))
+        );
+
+        // Fungsi bantu untuk mengisi form
         function ensureInputFilled2($driver, $elementName, $value)
         {
             $inputElement = $driver->findElement(WebDriverBy::name($elementName));
@@ -515,7 +569,7 @@ if (dropdownButton) {
                 usleep(rand(500000, 1000000));
                 $inputElement->sendKeys($value);
                 usleep(rand(500000, 1000000));
-                $currentValue = $inputElement->getAttribute('value');
+                $currentValue = $inputElement->getDomProperty('value');
                 $retryCount++;
             } while ($currentValue !== (string) $value && $retryCount < $maxRetries);
 
@@ -524,6 +578,7 @@ if (dropdownButton) {
             }
         }
 
+        // Fungsi untuk membuat string acak
         function generateRandomString($length = 3)
         {
             $characters = 'abcdefghijklmnopqrstuvwxyz';
@@ -534,6 +589,7 @@ if (dropdownButton) {
             return $randomString;
         }
 
+        // Mulai percobaan isi username
         $attempt = 0;
         $maxAttempts = 3;
 
@@ -545,7 +601,7 @@ if (dropdownButton) {
             );
 
             $randomLetters = generateRandomString(3);
-            $username = "miaw" . $randomLetters . "h";
+            $username = "bgs" . $randomLetters . "h";
 
             ensureInputFilled2($this->driver, 'Username', $username);
             sleep(rand(1, 3));
@@ -555,7 +611,6 @@ if (dropdownButton) {
             );
 
             sleep(rand(1, 3));
-
             $this->driver->findElement(WebDriverBy::cssSelector('button[type="button"]'))->click();
 
             try {
@@ -580,6 +635,11 @@ if (dropdownButton) {
         $this->driver->wait(20)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::cssSelector('div[jsname="ornU0b"]'))
         );
+
+        $target = $this->driver->findElement(WebDriverBy::cssSelector('div[jsname="ornU0b"]'));
+        $this->driver->executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", [$target]);
+        $target->click();
+        $this->driver->executeScript("arguments[0].click();", [$target]);
 
         $this->driver->wait(20)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::name('Passwd'))
@@ -649,7 +709,7 @@ if (dropdownButton) {
                 // SMS-Activate logic
                 if ($useVirtuSim && $phoneNumber == '') {
                     $apiKey = 'ao7Y8HAIesDyOZCG1g2nUVTXft69NK';
-                    $serviceId = '2880'; // ID layanan di VirtuSim
+                    $serviceId = 'any'; // ID layanan di VirtuSim
                     $operator = 'any';
 
                     $apiUrl = "https://virtusim.com/api/json.php?api_key=$apiKey&action=order&service=$serviceId&operator=$operator";
